@@ -1,187 +1,34 @@
-#pragma once
-
-#include "fuck_awesomium.h"
 #define DllExport   __declspec( dllexport )
+
+#include <vector>
+#include <string>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <string>
 
-
-// DEBUG SHIT.
 #include <fstream>
 
+// Debug shit
 std::ofstream debug_stream;
 
-void debug_write(const char* msg) {
+void debug_log(const char* msg) {
+	if (!debug_stream.is_open()) {
+		debug_stream.open("C:/Users/Mad-P/Desktop/awesome_log.txt");
+		debug_stream << "Logging started!" << std::endl;
+	}
 	debug_stream << msg << std::endl;
 }
 
 // Some constants which are totally not fucking dumb
-char*holycow = "WOWHOLYCOW";
+char* ver = "1337_NOAWESOMIUMFUCKER";
+
+char* holycow = "WOWHOLYCOW";
+
+char* shitbuf = "COCK";
 
 namespace Awesomium
 {
-
-	class JSValue;
-	template<class T>
-	class WebVector;
-
-
-	class DllExport JSArray
-	{
-	public:
-		explicit JSArray() { };
-		JSArray(unsigned int n) {  };
-		JSArray(const JSArray &rhs) { };
-		JSArray & operator=(const JSArray&rhs) {
-			return *shitarray;
-		};
-
-		unsigned int size() const { return 1; };
-		unsigned int capacity() const { return 1; };
-		JSValue & At(unsigned int idx) { return *shitvalue; };
-		const JSValue & At(unsigned int idx) const { return *shitvalue; };
-
-		JSValue & operator[](unsigned int idx) {
-			return *shitvalue;
-		};
-
-		const JSValue & operator[](unsigned int idx) const {
-			return *shitvalue;
-		}
-
-		void Push(const JSValue&item) {};
-		void Pop() {};
-		void Insert(const JSValue&item, unsigned int idx) {};
-		void Erase(unsigned int idx) {};
-		void Clear() {};
-
-		static JSArray *shitarray;
-		static JSValue *shitvalue;
-
-	protected:
-		WebVector<JSValue>* vector_;
-	};
-
-	class DllExport WebKeyboardEvent
-	{
-	public:
-		WebKeyboardEvent() { };
-
-	};
-
-	namespace WebViewListener
-	{
-
-		class DllExport Load
-		{
-		public:
-			virtual ~Load() {};
-		};
-
-		class DllExport View
-		{
-		public:
-			virtual ~View() {};
-		};
-
-	};
-
-	template<class T>
-	class WebVector;
-
-	class DllExport WebString
-	{
-	public:
-		explicit WebString() {};
-		explicit WebString(const WebString& src, unsigned int pos, unsigned int n) { };
-		explicit WebString(const unsigned short*data) {};
-		explicit WebString(const unsigned short*data, unsigned int len) { };
-		WebString(const WebString&src) {};
-		~WebString() {};
-		WebString& operator=(const WebString&rhs) { return *shitstring; };
-
-
-		static WebString CreateFromUTF8(const char* str, unsigned int len)
-		{
-			shitstring->Clear();
-
-			return *shitstring;
-		};
-
-		const unsigned short*data() const { return (unsigned short*)holycow; };
-
-		unsigned int length() const {
-			return 1;
-		};
-
-
-		bool IsEmpty() const { return true; };
-
-		int Compare(const WebString&src) const
-		{
-			return 1;
-		};
-
-		WebString& Assign(const WebString& src) { return *shitstring; };
-		WebString& Assign(const WebString& src, unsigned int pos, unsigned int n) { return *shitstring; };
-		WebString& Assign(const unsigned short* data) { return *shitstring; };
-		WebString& Assign(const unsigned short* data, unsigned int len) { return *shitstring; };
-		WebString& Append(const WebString& src) { return *shitstring; };
-		void Swap(WebString& src) { src = *shitstring; };
-
-		void Clear() { instance_ = shitstring; };
-
-		unsigned int ToUTF8(char*dest, unsigned int len) const { return 1; };
-
-		bool operator==(const WebString&other) const { return true; };
-		bool operator!=(const WebString&other) const { return true; };
-		bool operator<(const WebString&other) const { return true; };
-
-
-		static WebString*shitstring;
-
-	private:
-		explicit WebString(const void*internal_instance) { instance_ = shitstring; };
-		void*instance_;
-		friend class InternalHelper;
-	};
-
-	class DllExport WebStringArray {
-	public:
-		WebStringArray() {};
-		explicit WebStringArray(unsigned int n) {};
-		WebStringArray(const WebStringArray& rhs) {};
-		~WebStringArray() {};
-
-		WebStringArray& operator=(const WebStringArray& rhs) { return *shitarray; };
-
-		unsigned int size() const { return 0; };
-		WebString& At(unsigned int idx) { return *shitstring; };
-		const WebString& At(unsigned int idx) const { return *shitstring; };
-		WebString& operator[](unsigned int idx) { return *shitstring; };
-		const WebString& operator[](unsigned int idx) const { return *shitstring; };
-		void Push(const WebString& item) {};
-
-		static WebString*shitstring;
-		static WebStringArray*shitarray;
-
-	protected:
-		WebVector<WebString>* vector_;
-	};
-}
-
-Awesomium::WebString* Awesomium::WebString::shitstring = new Awesomium::WebString;
-Awesomium::WebString* Awesomium::WebStringArray::shitstring = new Awesomium::WebString;
-Awesomium::WebStringArray* Awesomium::WebStringArray::shitarray = new Awesomium::WebStringArray;
-
-
-#pragma pack(push)
-#pragma pack(1)
-namespace Awesomium
-{
-	class WebStringArray;
+	// Enums
 
 	enum LogLevel {
 		kLogLevel_None = 0,  ///< No log is created
@@ -189,31 +36,259 @@ namespace Awesomium
 		kLogLevel_Verbose,   ///< Logs everything
 	};
 
+	enum Error {
+		kError_None = 0,
+		kError_BadParameters,
+		kError_ObjectGone,
+		kError_ConnectionGone,
+		kError_TimedOut,
+		kError_WebViewGone,
+		kError_Generic,
+	};
+
+	enum JSObjectType {
+		kJSObjectType_Local,
+		kJSObjectType_Remote,
+		kJSObjectType_RemoteGlobal,
+	};
+
+
+	class JSValue;
+
+	namespace WebViewListener
+	{
+
+		class DllExport Load
+		{
+		public:
+			virtual ~Load() { debug_log("DEL WEBVIEWLISTENER.LOAD"); };
+		};
+
+		class DllExport View
+		{
+		public:
+			virtual ~View() { debug_log("DEL WEBVIEWLISTENER.VIEW"); };
+		};
+
+	};
+
+	// This needs to be 4 bytes (ON WINDOOWS! CHECK OTHER PLATFORMS!)
+	// So, we're storing pointers to the internal strings to cut down the size
+	class DllExport WebString
+	{
+	public:
+
+		explicit WebString() {
+			internal_string = new std::u16string;
+		};
+		explicit WebString(const WebString& src, unsigned int pos, unsigned int n) {
+			debug_log("NEW WEBSTRING SUBSTR");
+		};
+		explicit WebString(const char16_t* data) {
+			internal_string = new std::u16string(data);
+		};
+		explicit WebString(const char16_t* data, unsigned int len) {
+			internal_string = new std::u16string(data, len);
+		};
+		WebString(const WebString& src) {
+			internal_string = new std::u16string(*src.internal_string);
+		};
+		
+		~WebString() {
+			delete internal_string;
+		};
+		
+		WebString& operator=(const WebString& rhs) {
+			delete internal_string;
+			internal_string = new std::u16string(*rhs.internal_string);
+			return *this;
+		};
+
+		static WebString CreateFromUTF8(const char* str, unsigned int len)
+		{
+			std::vector<char16_t> widened;
+
+			for (unsigned int i = 0; i < len; i++) {
+				widened.push_back(str[i]);
+			}
+
+			WebString newString( widened.data(), widened.size() );
+
+			return newString;
+		};
+
+		const char16_t* data() const {
+			debug_log("get data");
+			return internal_string->c_str();
+		};
+
+		unsigned int length() const {
+			debug_log("get len");
+			return internal_string->length();
+		};
+
+		bool IsEmpty() const {
+			debug_log("get empty");
+			return internal_string->empty();
+		};
+
+		int Compare(const WebString&src) const
+		{
+			debug_log("WEBSTRING CMP");
+			return 1;
+		};
+
+		WebString& Assign(const WebString& src) {
+			debug_log("WEBSTRING ASSIGN");
+			return *this;
+		};
+		WebString& Assign(const WebString& src, unsigned int pos, unsigned int n) {
+			debug_log("WEBSTRING ASSIGN2");
+			return *this;
+		};
+		WebString& Assign(const char16_t* data) {
+			debug_log("WEBSTRING ASSIGN3");
+			return *this;
+		};
+		WebString& Assign(const char16_t* data, unsigned int len) {
+			debug_log("WEBSTRING ASSIGN4");
+			return *this;
+		};
+		
+		
+		
+		WebString& Append(const WebString& src) {
+			debug_log("WEBSTRING APPEND");
+			return *this;
+		};
+		void Swap(WebString& src) {
+			debug_log("WEBSTRING SWAP");
+			src = WebString();
+		};
+
+		void Clear() {
+			debug_log("WEBSTRING CLEAR");
+			//instance_ = shitstring;
+		};
+
+		unsigned int ToUTF8(char*dest, unsigned int len) const {
+			debug_log("WEBSTRING REQ UTF");
+			return 1;
+		};
+
+		bool operator==(const WebString&other) const {
+			debug_log("WEBSTRING ==");
+			return true;
+		};
+		bool operator!=(const WebString&other) const {
+			debug_log("WEBSTRING !=");
+			return true;
+		};
+		bool operator<(const WebString&other) const {
+			debug_log("WEBSTRING <");
+			return true;
+		};
+
+
+		friend std::ostream& operator<<(std::ostream& stream, const WebString& str) {
+			for (auto x : *str.internal_string)
+				stream << (char)x;
+			return stream;
+		}
+
+
+	private:
+		std::u16string* internal_string;
+
+		friend class InternalHelper;
+		explicit WebString(const void*internal_instance) {
+			debug_log("NEW WEBSTRING PRIVATE");
+		};
+	};
+
+	template<class T>
+	class WebVector {
+	public:
+		std::vector<T> vector;
+	};
+
+	class DllExport WebStringArray {
+	public:
+		WebStringArray() {
+			vector_ = new WebVector<WebString>();
+		};
+		explicit WebStringArray(unsigned int n) {
+			vector_ = new WebVector<WebString>();
+			vector_->vector.resize(n);
+		};
+		WebStringArray(const WebStringArray& rhs) {
+			debug_log("COPY WEBSTRINGARRAY");
+		};
+		~WebStringArray() {
+			delete vector_;
+		};
+
+		WebStringArray& operator=(const WebStringArray& rhs) {
+			debug_log("ASSIGN WEBSTRINGARRAY");
+			return *this;
+		};
+
+		unsigned int size() const { return vector_->vector.size(); };
+
+		WebString& At(unsigned int idx) {
+			return vector_->vector.at(idx);
+		};
+		const WebString& At(unsigned int idx) const {
+			return vector_->vector.at(idx);
+		};
+		WebString& operator[](unsigned int idx) {
+			return vector_->vector[idx];
+		};
+		const WebString& operator[](unsigned int idx) const {
+			return vector_->vector[idx];
+		};
+		void Push(const WebString& item) {
+			vector_->vector.push_back(item);
+		};
+
+		friend std::ostream& operator<<(std::ostream& stream, const WebStringArray& arr) {
+			for (auto x : arr.vector_->vector)
+				stream << " -> " << x << std::endl;
+			return stream;
+		}
+
+	protected:
+		WebVector<WebString>* vector_;  // <- We just need to leave this in as a dummy. Hopefully.
+	};
+
+
+
+
+	#pragma pack(push,1)
+
 	struct DllExport WebConfig
 	{
 	public:
 		WebConfig() {};
 
-		LogLevel log_level;
-		WebString package_path;
-		WebString plugin_path;
-		WebString log_path;
-		WebString child_process_path;
-		WebString user_agent;
-		int remote_debugging_port;
-		WebString remote_debugging_host;
-		bool reduce_memory_usage_on_navigation;
-		WebString user_script;
-		WebString user_stylesheet;
-		WebString asset_protocol;
-		WebStringArray additional_options;
+		LogLevel log_level;						// 0
+		WebString package_path;					// 4
+		WebString plugin_path;					// 8
+		WebString log_path;						// 12
+		WebString child_process_path;			// 16
+		WebString user_agent;					// 20
+		int remote_debugging_port = 0;			// 24
+		WebString remote_debugging_host;		// 28
+		bool reduce_memory_usage_on_navigation = false;	// 32
+		WebString user_script;					// 36?
+		WebString user_stylesheet;				// 40?
+		WebString asset_protocol;				// 44?
+		WebStringArray additional_options;		// 48? (Doesn't really matter...)
 	};
-}
 
-namespace Awesomium {
 	struct DllExport WebPreferences
 	{
-		WebPreferences() {};
+		WebPreferences() { };
 		int max_http_cache_storage;
 		bool enable_javascript;
 		bool enable_dart;
@@ -242,20 +317,17 @@ namespace Awesomium {
 		bool allow_file_access_from_file_url;
 		bool allow_running_insecure_content;
 	};
-}
 
-#pragma pack(pop)
+	#pragma pack(pop)
 
 
-namespace Awesomium
-{
 	class WebSession;
 	class ResourceRequest;
 
 	class DllExport DataSource
 	{
 	public:
-		virtual ~DataSource() {};
+		virtual ~DataSource() { };
 		virtual void OnRequest(int id, const ResourceRequest& request, const WebString& path) {};
 		void SendResponse(int id, unsigned int buf, unsigned char*buff, const WebString& meme) {};
 		void SendResponse(int id, unsigned int buf, unsigned char const * buff, class Awesomium::WebString const &meme) {};
@@ -267,15 +339,13 @@ namespace Awesomium
 		int data_source_id;
 		friend class WebSessionImpl;
 	};
-}
 
-namespace Awesomium {
+	// There are functions to dynamically create these! Assume they need to take care of deleting them?
 	class DllExport ResourceResponse {
 	public:
-		ResourceResponse() {};
-		static ResourceResponse* Create(unsigned int num_bytes, unsigned char* buffer, const WebString& mime_type) { return shitresponse; };
-		static ResourceResponse* Create(const WebString& file_path) { return shitresponse; };
-		static ResourceResponse* shitresponse;
+		ResourceResponse() { debug_log("NEW RESRESPONSE"); };
+		static ResourceResponse* Create(unsigned int num_bytes, unsigned char* buffer, const WebString& mime_type) { debug_log("CREATE RESRESPONSE 1"); return new ResourceResponse(); };
+		static ResourceResponse* Create(const WebString& file_path) { debug_log("CREATE RESRESPONSE 2"); return new ResourceResponse(); };
 	protected:
 		ResourceResponse(unsigned int num_bytes, unsigned char* buffer, const WebString& mime_type) {};
 		ResourceResponse(const WebString& file_path) {};
@@ -286,118 +356,91 @@ namespace Awesomium {
 		WebString file_path_;
 		friend class WebCoreImpl;
 	};
-}
 
-Awesomium::ResourceResponse *Awesomium::ResourceResponse::shitresponse = new Awesomium::ResourceResponse;
-
-Awesomium::WebString shiteh;
-char*dick = "ay";
-
-namespace Awesomium {
 	class DllExport UploadElement {
 	public:
 		virtual bool IsFilePath() const { return false; };
 		virtual bool IsBytes() { return false; };
 		virtual unsigned int num_bytes() { return 1; };
 		virtual const unsigned char* bytes() { return 0; };
-		virtual WebString file_path() { return shiteh; };
+		virtual WebString file_path() { return path; };
 	protected:
 		virtual ~UploadElement() {}
+	private:
+		WebString path;
 	};
-}
 
-
-
-
-namespace Awesomium {
 	class DllExport WebURL
 	{
 	public:
-		WebURL() {};
-		explicit WebURL(const WebString&url_string) {};
+		WebURL() { debug_log("NEW WEBURL"); };
+		explicit WebURL(const WebString&str) {
+			debug_stream << "URL: " << str << std::endl;
+			//url_string = str;
+		};
 		WebURL(const WebURL&rhs) {};
 
 		~WebURL() {};
 
-		WebURL& operator=(const WebURL&rhs) { return *shiturl; };
+		WebURL& operator=(const WebURL&rhs) { return *this; };
 
 		bool IsValid() const { return true; };
 		bool IsEmpty() const { return false; };
-		WebString spec() const { return shiteh; };
-		WebString scheme() const { return shiteh; };
-		WebString username() const { return shiteh; };
-		WebString password() const { return shiteh; };
-		WebString host() const { return shiteh; };
-		WebString port() const { return shiteh; };
-		WebString path() const { return shiteh; };
-		WebString query() const { return shiteh; };
-		WebString anchor() const { return shiteh; };
-		WebString filename() const { return shiteh; };
+		WebString spec() const { return WebString(); };
+		WebString scheme() const { return WebString(); };
+		WebString username() const { return WebString(); };
+		WebString password() const { return WebString(); };
+		WebString host() const { return WebString(); };
+		WebString port() const { return WebString(); };
+		WebString path() const { return WebString(); };
+		WebString query() const { return WebString(); };
+		WebString anchor() const { return WebString(); };
+		WebString filename() const { return WebString(); };
 
 		bool operator==(const WebURL& other) const { return false; };
 		bool operator!=(const WebURL& other) const { return false; };
 		bool operator<(const WebURL& other) const { return false; };
 
-		static WebURL *shiturl;
-
 	private:
 		explicit WebURL(const void* internal_instance);
 		void* instance_;
 		friend class InternalHelper;
+
+		//WebString url_string;
 	};
-}
 
-Awesomium::WebURL *Awesomium::WebURL::shiturl = new Awesomium::WebURL;
-
-
-namespace Awesomium {
-	class WebURL;
-	class WebString;
-	class UploadElement;
-
+	// HOW ARE THESE MADE?
 	class DllExport ResourceRequest {
 	public:
 		virtual void Cancel() {};
 		virtual int origin_process_id() { return 1; };
 		virtual int origin_routing_id() { return 1; };
-		virtual WebURL url() { return *oururl; };
-		virtual WebString method() { return *ourstring; };
+		virtual WebURL url() { return WebURL(); };
+		virtual WebString method() { return WebString(); };
 		virtual void set_method(const WebString& method) {};
-		virtual WebString referrer() const { return *ourstring; };
+		virtual WebString referrer() const { return WebString(); };
 		virtual void set_referrer(const WebString& referrer) {};
-		virtual WebString extra_headers() const { return *ourstring; };
+		virtual WebString extra_headers() const { return WebString(); };
 		virtual void set_extra_headers(const WebString& headers) {};
 		virtual void AppendExtraHeader(const WebString& name, const WebString& value) {};
 		virtual unsigned int num_upload_elements() const { return 0; };
-		virtual const UploadElement* GetUploadElement(unsigned int idx) const { return ourupload; };
+		virtual const UploadElement* GetUploadElement(unsigned int idx) const { return nullptr; }; // <=========================== RETURNING NULLPTR
 		virtual void ClearUploadElements() {};
 		virtual void AppendUploadFilePath(const WebString& path) {};
 		virtual void AppendUploadBytes(const char* bytes, unsigned int num_bytes) {};
 		virtual void set_ignore_data_source_handler(bool ignore) {};
 
-		static WebURL *oururl;
-		static WebString *ourstring;
-		static UploadElement *ourupload;
 	protected:
 		virtual ~ResourceRequest() {}
 	};
-}
 
-Awesomium::WebURL *Awesomium::ResourceRequest::oururl = new WebURL;
-Awesomium::WebString *Awesomium::ResourceRequest::ourstring = new WebString;
-Awesomium::UploadElement *Awesomium::ResourceRequest::ourupload = new UploadElement;
-
-Awesomium::WebString cocka;
-Awesomium::WebPreferences shitpref;
-
-namespace Awesomium {
 	class DllExport WebSession
 	{
 	public:
 		virtual void Release() const {};
 		virtual bool IsOnDisk() const { return false; };
-		virtual WebString data_path() const { return cocka; };
-		virtual const WebPreferences& preferences() const { return shitpref; };
+		virtual WebString data_path() const { return WebString(); };
+		virtual const WebPreferences& preferences() const { return *(new WebPreferences()); }; // VERY NOT GOOD!!! <======================================
 		virtual void AddDataSource(const WebString& asset_host, DataSource* source) {};
 		virtual void SetCookie(const WebURL& url, const WebString& cookie_string, bool is_http_only, bool force_session_cookie) {};
 		virtual void ClearCookies() {};
@@ -406,41 +449,50 @@ namespace Awesomium {
 	protected:
 		virtual ~WebSession() {}
 	};
-}
 
+	typedef int WebViewType;
+	typedef HANDLE ProcessHandle;
+	typedef HWND NativeWindow;
 
+	ProcessHandle PROC_HANDLE;
+	NativeWindow WINDOW;
 
-typedef int WebViewType;
-typedef HANDLE ProcessHandle;
-typedef HWND NativeWindow;
-
-ProcessHandle shit;
-NativeWindow shit2;
-
-
-namespace Awesomium {
 	class WebView;
-	class JSValue;
+
 	class JSObject;
+	class JSArray;
 
 	class DllExport JSValue
 	{
 	public:
-		JSValue() {};
-		explicit JSValue(bool val) {};
-		explicit JSValue(int val) {};
-		explicit JSValue(double val) {};
-		JSValue(const WebString& val) {};
-		JSValue(const JSObject& val) {};
-		JSValue(const JSArray &val) {};
-		JSValue(const JSValue& orig) {};
+		JSValue() { debug_log("NEW JSVALUE"); };
+		explicit JSValue(bool val) { debug_log("NEW JSVALUE2"); };
+		explicit JSValue(int val) { debug_log("NEW JSVALUE3"); };
+		explicit JSValue(double val) { debug_log("NEW JSVALUE4"); };
+		JSValue(const WebString& val) { debug_log("COPY JSVALUE"); };
+		JSValue(const JSObject& val) { debug_log("COPY JSVALUE2"); };
+		JSValue(const JSArray &val) { debug_log("COPY JSVALUE3"); };
+		JSValue(const JSValue& orig) { debug_log("COPY JSVALUE4"); };
 
 		~JSValue() {};
 
-		JSValue& operator=(const JSValue&rhs) { return *cocka; };
+		JSValue& operator=(const JSValue&rhs) { return *this; };
 
-		static const JSValue& Undefined()  { return *cockb; };
-		static const JSValue& Null() { return *cockc; };
+		// Not sure wtf I implemented these, going to tunnel through CEF anyway...
+		static const JSValue& Undefined()  {
+			static JSValue* undef = nullptr;
+			if (undef == nullptr) {
+				undef = new JSValue();
+			}
+			return *undef;
+		};
+		static const JSValue& Null() {
+			static JSValue* _null = nullptr;
+			if (_null == nullptr) {
+				_null = new JSValue();
+			}
+			return *_null;
+		};
 
 		bool IsBoolean() const { return true; };
 		bool IsInteger() const { return true; };
@@ -452,97 +504,99 @@ namespace Awesomium {
 		bool IsNull() const { return false; };
 		bool IsUndefined() const { return false; };
 
-		WebString ToString() const { return *ding; };
+		WebString ToString() const { return WebString(); };
 		int ToInteger() const { return 1; };
 		double ToDouble() const { return 1; };
 		bool ToBoolean() const { return true; };
-		JSArray& ToArray() { return *fotze; };
-		const JSArray& ToArray() const { return *fotze; };
+		
+		JSArray& ToArray();
+		const JSArray& ToArray() const;
 
-		JSObject& ToObject() { return *penisa; };
-		const JSObject& ToObject() const { return *penisa; };
-
-		static JSValue* cocka;
-		static JSValue* cockb;
-		static JSValue* cockc;
-		static JSObject* penisa;
-		static JSArray* fotze;
-		static WebString* ding;
-
+		JSObject& ToObject();
+		const JSObject& ToObject() const;
 	};
 
-	enum Error {
-		kError_None = 0,
-		kError_BadParameters,
-		kError_ObjectGone,
-		kError_ConnectionGone,
-		kError_TimedOut,
-		kError_WebViewGone,
-		kError_Generic,
-	};
+	class DllExport JSArray
+	{
+	public:
+		explicit JSArray() { debug_log("NEW JSARRAY"); };
+		JSArray(unsigned int n) { debug_log("NEW JSARRAY2"); };
+		JSArray(const JSArray &rhs) { debug_log("COPY JSARRAY"); };
+		JSArray & operator=(const JSArray&rhs) {
+			return *this;
+		};
 
-	enum JSObjectType {
-		kJSObjectType_Local,
-		kJSObjectType_Remote,
-		kJSObjectType_RemoteGlobal,
+		unsigned int size() const { return 1; };
+		unsigned int capacity() const { return 1; };
+		JSValue & At(unsigned int idx) { return value; };
+		const JSValue & At(unsigned int idx) const { return value; };
+
+		JSValue & operator[](unsigned int idx) {
+			return value;
+		};
+
+		const JSValue & operator[](unsigned int idx) const {
+			return value;
+		}
+
+		void Push(const JSValue&item) {};
+		void Pop() {};
+		void Insert(const JSValue&item, unsigned int idx) {};
+		void Erase(unsigned int idx) {};
+		void Clear() {};
+
+	protected:
+		WebVector<JSValue>* vector_;
+		JSValue value;
 	};
 
 	class DllExport JSObject
 	{
 	public:
-		JSObject() {};
-		JSObject(const JSObject &obj) {};
-		JSObject &operator=(const JSObject&rhs) { return *shitobj; };
+		JSObject() { debug_log("NEW JSOBJ"); };
+		JSObject(const JSObject &obj) { debug_log("COPY JSOBJ"); };
+		JSObject &operator=(const JSObject&rhs) { return *this; };
 		unsigned int remote_id() const { return 0; };
 		int ref_count() const { return 0; };
 
 		JSObjectType type() const { return JSObjectType::kJSObjectType_Local; };
-		WebView* owner() const { return shitview; };
+		WebView* owner() const { return nullptr; };
 
-		JSArray GetPropertyName() const { return *shitarray; };
+		JSArray GetPropertyName() const { return *(new JSArray()); }; // DUMB!!!
 		bool HasProperty(const WebString& name) const { return false; }
-		JSValue GetProperty(const WebString& name) const { return *shitvalue; };
+		JSValue GetProperty(const WebString& name) const { return *(new JSValue()); }; // DUMB
 		void SetProperty(const WebString& name, const JSValue& value) {};
 		void SetPropertyAsync(const WebString& name, const JSValue& value) {};
 		void RemoveProperty(const WebString& name) {};
-		JSArray GetMethodNames() const { return *shitarray; };
+		JSArray GetMethodNames() const { return *(new JSArray()); }; // DUMB
 		bool HasMethod(const WebString& name) const { return false; };
-		JSValue Invoke(const WebString& name, const JSArray& args) { return *shitvalue; };
+		JSValue Invoke(const WebString& name, const JSArray& args) { return *(new JSValue()); }; // DUMB
 		void InvokeAsync(const WebString& name, const JSArray& args) {};
-		WebString ToString() const { return *shitstring; };
+		WebString ToString() const { return WebString(); };
 
 
 		void SetCustomMethod(const WebString& name, bool has_return_value) {};
 
 		Error last_error() const;
-
-		static JSObject* shitobj;
-		static JSArray* shitarray;
-		static JSValue* shitvalue;
-		static WebString* shitstring;
-		static WebString* shittype;
-		static WebView* shitview;
 	};
-}
 
-Awesomium::JSObject* Awesomium::JSObject::shitobj = new JSObject;
-Awesomium::JSArray* Awesomium::JSObject::shitarray = new JSArray;
-Awesomium::JSValue* Awesomium::JSObject::shitvalue = new JSValue;
-Awesomium::WebString* Awesomium::JSObject::shitstring = new WebString;
+	// IMPL -- SUPER DUMB!
 
+	JSObject& JSValue::ToObject() {
+		return *(new JSObject());
+	}
 
-Awesomium::JSArray*Awesomium::JSArray::shitarray = new Awesomium::JSArray;
-Awesomium::JSValue*Awesomium::JSArray::shitvalue = new Awesomium::JSValue;
+	const JSObject& JSValue::ToObject() const {
+		return *(new JSObject());
+	}
 
-Awesomium::JSValue*Awesomium::JSValue::cocka = new Awesomium::JSValue;
-Awesomium::JSValue*Awesomium::JSValue::cockb = new Awesomium::JSValue;
-Awesomium::JSValue*Awesomium::JSValue::cockc = new Awesomium::JSValue;
-Awesomium::JSObject*Awesomium::JSValue::penisa = new Awesomium::JSObject;
-Awesomium::JSArray*Awesomium::JSValue::fotze = new Awesomium::JSArray;
-Awesomium::WebString*Awesomium::JSValue::ding = new Awesomium::WebString;
-
-
-namespace Awesomium {
+	JSArray& JSValue::ToArray() {
+		return *(new JSArray());
+	}
+	
+	const JSArray& JSValue::ToArray() const {
+		return *(new JSArray());
+	};
 
 
 	class DllExport Surface
@@ -554,25 +608,30 @@ namespace Awesomium {
 
 	};
 
-}
+	WebViewListener::View view;
+	WebViewListener::Load load;
 
-Awesomium::WebViewListener::View view;
-Awesomium::WebViewListener::Load load;
-namespace Awesomium {
+	// Uhhh?
+	class DllExport WebKeyboardEvent
+	{
+	public:
+		WebKeyboardEvent() { debug_log("NEW KBEVENT"); };
 
+	};
 
+	// A goddamn window
 	class DllExport WebView
 	{
 	public:
 		virtual void Destroy() { };
-		virtual WebViewType type() { return 1; };
+		virtual WebViewType type() { return type_; };
 		virtual int process_id() { return 1; };
 		virtual int routing_id() { return 1; };
 		virtual int next_routing_id() { return 1; };
-		virtual ProcessHandle process_handle() { return ourprochandle; };
+		virtual ProcessHandle process_handle() { return PROC_HANDLE; };
 		virtual void set_parent_window(NativeWindow parent) { };
-		virtual NativeWindow parent_window() { return shit2; };
-		virtual NativeWindow window() { return shit2; };
+		virtual NativeWindow parent_window() { return WINDOW; };
+		virtual NativeWindow window() { return WINDOW; };
 		virtual void set_view_listener(WebViewListener::View* listener) { };
 		virtual void set_load_listener(WebViewListener::Load* listener) { };
 		virtual void set_process_listener(void* listener) { proclist = listener; };
@@ -601,7 +660,10 @@ namespace Awesomium {
 		virtual void* input_method_editor_listener() {
 			return inputlist;
 		};
-		virtual void LoadURL(const WebURL& url) { };
+		virtual void LoadURL(const WebURL& url) {
+			debug_log("load url!");
+			//debug_stream << url << endl;
+		};
 		virtual void GoBack() { };
 		virtual void GoForward() { };
 		virtual void GoToHistoryOffset(int offset) { };
@@ -612,12 +674,15 @@ namespace Awesomium {
 		virtual Surface* surface() {
 			return 0;//oursurface;
 		};
-		virtual WebURL url() { return *oururl; };
-		virtual WebString title() { return *ourstring; };
-		virtual WebSession* session() { return oursession; }
+		virtual WebURL url() { return *(new WebURL()); };
+		virtual WebString title() { return WebString(); };
+		virtual WebSession* session() { return session_; }
 		virtual bool IsLoading() { return 1; };
 		virtual bool IsCrashed() { return 0; };
-		virtual void Resize(int width, int height) { };
+		virtual void Resize(int width, int height) {
+			debug_log("RESIZE");
+			debug_stream << width << ", " << height << std::endl;
+		};
 		virtual void SetTransparent(bool is_transparent) { };
 		virtual bool IsTransparent() { return false; };
 		virtual void PauseRendering() { };
@@ -650,9 +715,16 @@ namespace Awesomium {
 		virtual void SelectAll() { };
 		virtual int PrintToFile(const WebString& output_directory, const int& config) { return 1; };
 		virtual int last_error() const { return 0; };
-		virtual JSValue CreateGlobalJavascriptObject(const WebString& name) { return *koks; };
+		virtual JSValue CreateGlobalJavascriptObject(const WebString& name) {
+			debug_log("create js obj");
+			debug_stream << name << std::endl;
+			return *(new JSValue());
+		};
 		virtual void ExecuteJavascript(const WebString& script, const WebString& frame_xpath) { };
-		virtual JSValue ExecuteJavascriptWithResult(const WebString& script, const WebString& frame_xpath) { return *koks; };
+		virtual JSValue ExecuteJavascriptWithResult(const WebString& script, const WebString& frame_xpath) {
+			debug_log("exec js");
+			return *(new JSValue());
+		};
 		virtual void set_js_method_handler(void* handler) { jshandler = handler; };
 		virtual void* js_method_handler() { return jshandler; };
 		virtual void set_sync_message_timeout(int timeout_ms) { };
@@ -670,15 +742,12 @@ namespace Awesomium {
 
 		virtual void ReduceMemoryUsage() { };
 
-		WebView() {}
+		WebView() { debug_log("NEW WEB VIEW FROM CTOR, WTF!"); }
+		WebView(WebSession* session, int type) {
+			session_ = session;
+			type_ = type;
+		}
 		~WebView() {}
-
-		static WebURL* oururl;
-		static WebString* ourstring;
-		static WebSession*oursession;
-		static JSValue* koks;
-		static ProcessHandle* ourprochandle;
-		static Surface*oursurface;
 
 		void*proclist;
 		void*menulist;
@@ -687,29 +756,18 @@ namespace Awesomium {
 		void*downloadlist;
 		void*inputlist;
 		void*jshandler;
-
-
+	private:
+		WebSession* session_;
+		int type_;
 	};
 
-
-}
-
-Awesomium::WebURL *Awesomium::WebView::oururl = new WebURL;
-Awesomium::WebString *Awesomium::WebView::ourstring = new WebString;
-Awesomium::WebSession *Awesomium::WebView::oursession = new WebSession;
-Awesomium::JSValue *Awesomium::WebView::koks = new JSValue;
-Awesomium::Surface *Awesomium::WebView::oursurface = new Surface;
-ProcessHandle *Awesomium::WebView::ourprochandle = new ProcessHandle;
-
-
-namespace Awesomium {
+	// Empty
 	class DllExport SurfaceFactory
 	{
 	public:
 	};
-}
 
-namespace Awesomium {
+	// No CTOR -- What makes these?
 	class DllExport ResourceInterceptor
 	{
 	public:
@@ -724,59 +782,86 @@ namespace Awesomium {
 		}
 		virtual ~ResourceInterceptor() {}
 	};
-}
 
-
-char*ver = "1337_NOAWESOMIUMFUCKER";
-
-namespace Awesomium {
+	// Very important singleton!
 	class DllExport WebCore
 	{
 	public:
-		static WebCore*Initialize(const WebConfig&config)  { return instance_; };
-		static void Shutdown() {};
-		static WebCore*instance() { return instance_; };
-		virtual WebSession* CreateWebSession(const WebString& path, const WebPreferences& prefs) { return sess; };
-		virtual WebView* CreateWebView(int width, int height, WebSession* session = 0, int type = 0) { return view; };
-		virtual void set_surface_factory(SurfaceFactory* factory) {  };
-		virtual SurfaceFactory* surface_factory() const { return surf; };
-		virtual void set_resource_interceptor(ResourceInterceptor* interceptor) { };
-		virtual ResourceInterceptor* resource_interceptor() const { return resc; };
-		virtual void Update() {  };
-		virtual void Log(const WebString& message, int severity, const WebString& file, int line) {  };
-		virtual const char* version_string() const { return ver; };
+		static WebCore* Initialize(const WebConfig& config)  {
+			debug_log("WEBCORE INIT");
 
-		static unsigned int used_memory() { return 0; } // :-) If only it was this easy!
-		static unsigned int allocated() { return 128; } // :-) If only it was this easy!
-		static void release_memory() {};
+			// We don't ACTUALLY have to deal with the config,
+			// we'll whip up our own config for CEF. Relevant details are:
 
-		virtual ~WebCore() {}
+			// USERAGENT = Mozilla/5.0 (Windows; Valve Source Client) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1003.1 Safari/535.19 Awesomium/1.7.5.1 GMod/13
+			// PARAMS = --allow-file-access-from-files
+			
+			instance_ = new WebCore();
 
+			return instance_;
+		};
+		static void Shutdown() {
+			debug_log("WEBCORE SHUTDOWN");
+		};
+		static WebCore* instance() {
+			return instance_;
+		};
+
+		virtual WebSession* CreateWebSession(const WebString& path, const WebPreferences& prefs) {
+			// ignore preferences like we do with  the config.
+			// empty string (all we've seen so far) is for an in-memory store of user data. this is fine with me.
+			return new WebSession();
+		};
+		virtual WebView* CreateWebView(int width, int height, WebSession* session = 0, int type = 0) {
+			debug_log("GET WEB VIEW");
+
+			WebView* webview = new WebView(session, type);
+			webview->Resize(width, height);
+
+			return webview;
+		};
+		virtual void set_surface_factory(SurfaceFactory* factory) {
+			debug_log("SET SURFACE FACTORY");
+		};
+		virtual SurfaceFactory* surface_factory() const {
+			debug_log("GET SURFACE FACTORY");
+			return new SurfaceFactory();
+		};
+		virtual void set_resource_interceptor(ResourceInterceptor* interceptor) {
+			debug_log("SET RESOURCE INTERCEPTOR");
+		};
+		virtual ResourceInterceptor* resource_interceptor() const {
+			debug_log("GET RESOURCE INTERCEPTOR");
+			return new ResourceInterceptor();
+		};
+		virtual void Update() {
+			//debug_log("UPDATE!!!");
+		};
+		virtual void Log(const WebString& message, int severity, const WebString& file, int line) {
+			debug_log("LOG!!!");
+		};
+		virtual const char* version_string() const {
+			debug_log("GET VERSION");
+			return ver;
+		};
+
+		static unsigned int used_memory() { debug_log("Get used memes"); return 0; } // :-) If only it was this easy!
+		static unsigned int allocated() { debug_log("Get allocated memes"); return 128; } // :-) If only it was this easy!
+		static void release_memory() { debug_log("Release memes"); };
+
+		virtual ~WebCore() { debug_log("Delete webcore!"); }
+
+	private:
+		WebCore() {};
 		static WebCore* instance_;
-		static ResourceInterceptor*resc;
-		static SurfaceFactory*surf;
-		static WebView*view;
-		static WebSession*sess;
 	};
 
-}
+	WebCore* WebCore::instance_ = 0;
 
-Awesomium::WebCore*Awesomium::WebCore::instance_ = new Awesomium::WebCore;
-Awesomium::ResourceInterceptor*Awesomium::WebCore::resc = new Awesomium::ResourceInterceptor;
-Awesomium::SurfaceFactory*Awesomium::WebCore::surf = new Awesomium::SurfaceFactory;
-Awesomium::WebView*Awesomium::WebCore::view = new Awesomium::WebView;
-Awesomium::WebSession*Awesomium::WebCore::sess = new Awesomium::WebSession;
-
-Awesomium::WebView*Awesomium::JSObject::shitview = Awesomium::WebCore::view;
-
-
-char*shitbuf = "COCK";
-
-namespace Awesomium {
 	class DllExport BitmapSurface
 	{
 	public:
-		BitmapSurface(int width, int height) {};
+		BitmapSurface(int width, int height) { debug_log("new bitmap surface"); };
 		~BitmapSurface() {};
 
 		const unsigned char*buffer() const { return (unsigned char*)shitbuf; };
@@ -803,33 +888,13 @@ namespace Awesomium {
 	};
 
 	void DllExport CopyBuffers(int w, int h, unsigned char* src, int r, unsigned char* dst,
-		int dr, int dd, bool rgba, bool flip_y) {};
+		int dr, int dd, bool rgba, bool flip_y) { debug_log("COPY NEM BUFFERS"); };
 }
-
-/*int FuckAwesomium::Init()
-{
-	/*std::string init = InitializeSdk();
-
-	if (init != "")
-	{
-		MessageBoxA(NULL, init.c_str(), "!ERROR!", MB_OK);
-		return 0;
-	}*
-
-	return 0;
-}
-
-
-int DllInit()
-{
-	FuckAwesomium::Init();
-	return 0;
-}*/
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 {
-	debug_stream.open("C:/Users/Mad-P/Desktop/awesome_log.txt");
-	debug_write("FUCK AWESOMIUM!");
+	//debug_log("DLLMAIN RUNNING!");
+	
 	/*if (reason == DLL_PROCESS_ATTACH)
 	{
 		HANDLE thread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)DllInit, NULL, 0, 0);

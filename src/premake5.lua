@@ -20,7 +20,7 @@ solution "Fuck_Awesomium"
     configurations { "Debug", "Release" }
 
     files { "src/**.h", "src/**.cpp" }
-
+    --[[ dumb sdk shit
     local sdk_dir = "C:/sdk13/mp/src/" -- Change this to suit your setup
 
     local function sdk(s) return sdk_dir..s end
@@ -32,12 +32,14 @@ solution "Fuck_Awesomium"
 				  sdk "", }
 
     libdirs     { sdk"lib", sdk"lib/public" }
-
+]]
     -- A project defines one build target
+
+    targetname "Awesomium"
+
     project "Fuck_Awesomium"
         configuration "Release"
             defines { "NDEBUG", "_GENERIC" }
-            targetname "awesomium"
             targetdir "../dieawesomium/bin"
 
         configuration "Debug"

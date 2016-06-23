@@ -7,6 +7,19 @@
 #include <Windows.h>
 #include <string>
 
+
+// DEBUG SHIT.
+#include <fstream>
+
+std::ofstream debug_stream;
+
+void debug_write(const char* msg) {
+	debug_stream << msg << std::endl;
+}
+
+// Some constants which are totally not fucking dumb
+char*holycow = "WOWHOLYCOW";
+
 namespace Awesomium
 {
 
@@ -50,17 +63,14 @@ namespace Awesomium
 	protected:
 		WebVector<JSValue>* vector_;
 	};
-};
 
-namespace Awesomium {
 	class DllExport WebKeyboardEvent
 	{
 	public:
 		WebKeyboardEvent() { };
 
 	};
-}
-namespace Awesomium {
+
 	namespace WebViewListener
 	{
 
@@ -77,11 +87,6 @@ namespace Awesomium {
 		};
 
 	};
-}
-
-char*holycow = "WOWHOLYCOW";
-
-namespace Awesomium {
 
 	template<class T>
 	class WebVector;
@@ -167,9 +172,9 @@ namespace Awesomium {
 	};
 }
 
-Awesomium::WebString*Awesomium::WebString::shitstring = new Awesomium::WebString;
-Awesomium::WebString*Awesomium::WebStringArray::shitstring = new Awesomium::WebString;
-Awesomium::WebStringArray*Awesomium::WebStringArray::shitarray = new Awesomium::WebStringArray;
+Awesomium::WebString* Awesomium::WebString::shitstring = new Awesomium::WebString;
+Awesomium::WebString* Awesomium::WebStringArray::shitstring = new Awesomium::WebString;
+Awesomium::WebStringArray* Awesomium::WebStringArray::shitarray = new Awesomium::WebStringArray;
 
 
 #pragma pack(push)
@@ -823,7 +828,8 @@ int DllInit()
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 {
-
+	debug_stream.open("C:/Users/Mad-P/Desktop/awesome_log.txt");
+	debug_write("FUCK AWESOMIUM!");
 	/*if (reason == DLL_PROCESS_ATTACH)
 	{
 		HANDLE thread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)DllInit, NULL, 0, 0);

@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 
 
 #define WIN32_LEAN_AND_MEAN
@@ -15,4 +15,4 @@
 #include <fstream>
 #include <string>
 #include <ctime>
-#include <Shlobj.h>
+#include <Shlobj.h>*/

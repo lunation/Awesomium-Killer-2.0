@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 
 // Including SDKDDKVer.h defines the highest available Windows platform.
 
@@ -7,4 +7,4 @@
 
 #define _WIN32_WINNT 0x0600
 
-#include <SDKDDKVer.h>
+#include <SDKDDKVer.h>*/

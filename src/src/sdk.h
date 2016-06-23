@@ -1,5 +1,5 @@
 //Engine Stuff
-#pragma once
+/*#pragma once
 #pragma comment (linker, "/NODEFAULTLIB:LIBCMT")
 #pragma warning (disable : 4099 4075 4996)
 #define WIN32_LEAN_AND_MEAN
@@ -20,4 +20,4 @@
 extern IVEngineClient *g_pEngine;
 extern ICvar *g_pCVar;
 
-extern std::string(InitializeSdk)();
+extern std::string(InitializeSdk)();*/

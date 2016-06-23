@@ -3,6 +3,9 @@
 #include "fuck_awesomium.h"
 #define DllExport   __declspec( dllexport )
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <string>
 
 namespace Awesomium
 {
@@ -798,18 +801,15 @@ namespace Awesomium {
 		int dr, int dd, bool rgba, bool flip_y) {};
 }
 
-
-
-
-int FuckAwesomium::Init()
+/*int FuckAwesomium::Init()
 {
-	std::string init = InitializeSdk();
+	/*std::string init = InitializeSdk();
 
 	if (init != "")
 	{
 		MessageBoxA(NULL, init.c_str(), "!ERROR!", MB_OK);
 		return 0;
-	}
+	}*
 
 	return 0;
 }
@@ -819,17 +819,15 @@ int DllInit()
 {
 	FuckAwesomium::Init();
 	return 0;
-}
+}*/
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 {
 
-	if (reason == DLL_PROCESS_ATTACH)
+	/*if (reason == DLL_PROCESS_ATTACH)
 	{
 		HANDLE thread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)DllInit, NULL, 0, 0);
-	}
+	}*/
 
-	return TRUE;
+	return true;
 }
-
-

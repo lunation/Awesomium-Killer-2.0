@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 
 
 #include "stdafx.h"
@@ -10,4 +10,4 @@ namespace FuckAwesomium
 	int Detach();
 
 	bool Initiated;
-};
+};*/

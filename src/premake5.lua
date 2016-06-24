@@ -1,48 +1,68 @@
-solution "Fuck_Awesomium"
-    language "C++"
-    location "project"
-    targetdir "build/release"
+solution "FuckAwesomium"
+	language "C++"
+	location "project"
 
-    configuration "vs*" -- speed shit
-    --gr- = no typeinfo
-    buildoptions({"/Qpar", "/Qfast_transcendentals", "/GL", "/Ot", "/Gm", "/MP", "/Gy", "/Gw"})
-    linkoptions { "/OPT:REF", "/OPT:ICF", "/LTCG"}
+	--configuration "vs*" -- speed shit
+	--gr- = no typeinfo
+	--buildoptions({"/Qpar", "/Qfast_transcendentals", "/GL", "/Ot", "/Gm", "/MP", "/Gy", "/Gw"})
+	--linkoptions { "/OPT:REF", "/OPT:ICF", "/LTCG"}
 
-    flags { "Optimize", "NoMinimalRebuild", "NoFramePointer", "EnableSSE2", "FloatFast", "NoBufferSecurityCheck"}
+	--flags { "Optimize", "NoMinimalRebuild", "NoFramePointer", "EnableSSE2", "FloatFast", "NoBufferSecurityCheck"}
 
-    vpaths {
-        ["Header Files/*"] = "src/**.h",
-        ["Source Files/*"] = "src/**.cpp",
-    }
+	configurations { "Debug", "Release" }
 
-    kind "SharedLib"
+	
+	--[[ dumb sdk shit
+	local sdk_dir = "C:/sdk13/mp/src/" -- Change this to suit your setup
 
-    configurations { "Debug", "Release" }
+	local function sdk(s) return sdk_dir..s end
 
-    files { "src/**.h", "src/**.cpp" }
-    --[[ dumb sdk shit
-    local sdk_dir = "C:/sdk13/mp/src/" -- Change this to suit your setup
-
-    local function sdk(s) return sdk_dir..s end
-
-    includedirs { sdk"public",       sdk"public/tier0", sdk"public/tier1",
-                  sdk"public/tier2", sdk"public/tier3", sdk"public/tier0",
-                  sdk"game",         sdk"game/client",  sdk"game/shared",
-                  sdk"tier1",        sdk"tier0",        sdk"common",
+	includedirs { sdk"public",       sdk"public/tier0", sdk"public/tier1",
+				  sdk"public/tier2", sdk"public/tier3", sdk"public/tier0",
+				  sdk"game",         sdk"game/client",  sdk"game/shared",
+				  sdk"tier1",        sdk"tier0",        sdk"common",
 				  sdk "", }
 
-    libdirs     { sdk"lib", sdk"lib/public" }
+	libdirs     { sdk"lib", sdk"lib/public" }
 ]]
-    -- A project defines one build target
+	includedirs { "cef" }
 
-    targetname "Awesomium"
+	--libdirs { "cef/Debug" }
+	libdirs { "cef/Debug", "cef/libcef_dll_wrapper/Debug" }
+	--links { "libcef", "cef_sandbox" }
+	links { "libcef", "libcef_dll_wrapper" }
 
-    project "Fuck_Awesomium"
-        configuration "Release"
-            defines { "NDEBUG", "_GENERIC" }
-            targetdir "../dieawesomium/bin"
+	-- A project defines one build target
 
-        configuration "Debug"
-            defines { "DEBUG", "_GENERIC" }
-            flags { "Symbols", "EnableSSE2" }
-            targetdir "build/debug"
+	
+
+	project "AwesomiumReplacement"
+		targetname "Awesomium"
+		kind "SharedLib"
+		files { "src/**.h", "src/**.cpp" }
+		
+		configuration "Release"
+			--defines { "NDEBUG", "_GENERIC" }
+			--targetdir "../dieawesomium/bin"
+
+		configuration "Debug"
+			buildoptions { "/MTd" }
+			--defines { "DEBUG", "_GENERIC" }
+			--flags { "Symbols", "EnableSSE2" }
+			targetdir "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/bin/"
+	
+	project "SubProcess"
+		targetname "gmod_cef"
+		kind "WindowedApp"
+		flags { "WinMain" }
+		files { "subprocess.cpp" }
+
+		configuration "Release"
+			--defines { "NDEBUG", "_GENERIC" }
+			--targetdir "../dieawesomium/bin"
+
+		configuration "Debug"
+			buildoptions { "/MTd" }
+			--defines { "DEBUG", "_GENERIC" }
+			--flags { "Symbols", "EnableSSE2" }
+			targetdir "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/bin/"

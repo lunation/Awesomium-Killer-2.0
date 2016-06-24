@@ -6,9 +6,16 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#include <fstream>
+#define OS_WIN
+#include "include/cef_base.h"
+#include "include/cef_app.h"
+#include "include/cef_browser.h"
+
+#include "DumbApp.h" // TODO REMOVE
 
 // Debug shit
+#include <fstream>
+
 std::ofstream debug_stream;
 
 void debug_log(const char* msg) {
@@ -17,6 +24,12 @@ void debug_log(const char* msg) {
 		debug_stream << "Logging started!" << std::endl;
 	}
 	debug_stream << msg << std::endl;
+}
+
+void panic(const char* msg) {
+	debug_log("PANIC!!!");
+	debug_log(msg);
+	exit(1);
 }
 
 // Some constants which are totally not fucking dumb
@@ -53,7 +66,7 @@ namespace Awesomium
 	};
 
 
-	class JSValue;
+	//class JSValue;
 
 	namespace WebViewListener
 	{
@@ -72,198 +85,12 @@ namespace Awesomium
 
 	};
 
-	// This needs to be 4 bytes (ON WINDOOWS! CHECK OTHER PLATFORMS!)
-	// So, we're storing pointers to the internal strings to cut down the size
-	class DllExport WebString
-	{
-	public:
+}
 
-		explicit WebString() {
-			internal_string = new std::u16string;
-		};
-		explicit WebString(const WebString& src, unsigned int pos, unsigned int n) {
-			debug_log("NEW WEBSTRING SUBSTR");
-		};
-		explicit WebString(const char16_t* data) {
-			internal_string = new std::u16string(data);
-		};
-		explicit WebString(const char16_t* data, unsigned int len) {
-			internal_string = new std::u16string(data, len);
-		};
-		WebString(const WebString& src) {
-			internal_string = new std::u16string(*src.internal_string);
-		};
-		
-		~WebString() {
-			delete internal_string;
-		};
-		
-		WebString& operator=(const WebString& rhs) {
-			delete internal_string;
-			internal_string = new std::u16string(*rhs.internal_string);
-			return *this;
-		};
+#include "webstring.h"
 
-		static WebString CreateFromUTF8(const char* str, unsigned int len)
-		{
-			std::vector<char16_t> widened;
-
-			for (unsigned int i = 0; i < len; i++) {
-				widened.push_back(str[i]);
-			}
-
-			WebString newString( widened.data(), widened.size() );
-
-			return newString;
-		};
-
-		const char16_t* data() const {
-			debug_log("get data");
-			return internal_string->c_str();
-		};
-
-		unsigned int length() const {
-			debug_log("get len");
-			return internal_string->length();
-		};
-
-		bool IsEmpty() const {
-			debug_log("get empty");
-			return internal_string->empty();
-		};
-
-		int Compare(const WebString&src) const
-		{
-			debug_log("WEBSTRING CMP");
-			return 1;
-		};
-
-		WebString& Assign(const WebString& src) {
-			debug_log("WEBSTRING ASSIGN");
-			return *this;
-		};
-		WebString& Assign(const WebString& src, unsigned int pos, unsigned int n) {
-			debug_log("WEBSTRING ASSIGN2");
-			return *this;
-		};
-		WebString& Assign(const char16_t* data) {
-			debug_log("WEBSTRING ASSIGN3");
-			return *this;
-		};
-		WebString& Assign(const char16_t* data, unsigned int len) {
-			debug_log("WEBSTRING ASSIGN4");
-			return *this;
-		};
-		
-		
-		
-		WebString& Append(const WebString& src) {
-			debug_log("WEBSTRING APPEND");
-			return *this;
-		};
-		void Swap(WebString& src) {
-			debug_log("WEBSTRING SWAP");
-			src = WebString();
-		};
-
-		void Clear() {
-			debug_log("WEBSTRING CLEAR");
-			//instance_ = shitstring;
-		};
-
-		unsigned int ToUTF8(char*dest, unsigned int len) const {
-			debug_log("WEBSTRING REQ UTF");
-			return 1;
-		};
-
-		bool operator==(const WebString&other) const {
-			debug_log("WEBSTRING ==");
-			return true;
-		};
-		bool operator!=(const WebString&other) const {
-			debug_log("WEBSTRING !=");
-			return true;
-		};
-		bool operator<(const WebString&other) const {
-			debug_log("WEBSTRING <");
-			return true;
-		};
-
-
-		friend std::ostream& operator<<(std::ostream& stream, const WebString& str) {
-			for (auto x : *str.internal_string)
-				stream << (char)x;
-			return stream;
-		}
-
-
-	private:
-		std::u16string* internal_string;
-
-		friend class InternalHelper;
-		explicit WebString(const void*internal_instance) {
-			debug_log("NEW WEBSTRING PRIVATE");
-		};
-	};
-
-	template<class T>
-	class WebVector {
-	public:
-		std::vector<T> vector;
-	};
-
-	class DllExport WebStringArray {
-	public:
-		WebStringArray() {
-			vector_ = new WebVector<WebString>();
-		};
-		explicit WebStringArray(unsigned int n) {
-			vector_ = new WebVector<WebString>();
-			vector_->vector.resize(n);
-		};
-		WebStringArray(const WebStringArray& rhs) {
-			debug_log("COPY WEBSTRINGARRAY");
-		};
-		~WebStringArray() {
-			delete vector_;
-		};
-
-		WebStringArray& operator=(const WebStringArray& rhs) {
-			debug_log("ASSIGN WEBSTRINGARRAY");
-			return *this;
-		};
-
-		unsigned int size() const { return vector_->vector.size(); };
-
-		WebString& At(unsigned int idx) {
-			return vector_->vector.at(idx);
-		};
-		const WebString& At(unsigned int idx) const {
-			return vector_->vector.at(idx);
-		};
-		WebString& operator[](unsigned int idx) {
-			return vector_->vector[idx];
-		};
-		const WebString& operator[](unsigned int idx) const {
-			return vector_->vector[idx];
-		};
-		void Push(const WebString& item) {
-			vector_->vector.push_back(item);
-		};
-
-		friend std::ostream& operator<<(std::ostream& stream, const WebStringArray& arr) {
-			for (auto x : arr.vector_->vector)
-				stream << " -> " << x << std::endl;
-			return stream;
-		}
-
-	protected:
-		WebVector<WebString>* vector_;  // <- We just need to leave this in as a dummy. Hopefully.
-	};
-
-
-
-
+namespace Awesomium
+{
 	#pragma pack(push,1)
 
 	struct DllExport WebConfig
@@ -565,8 +392,12 @@ namespace Awesomium
 		JSArray GetPropertyName() const { return *(new JSArray()); }; // DUMB!!!
 		bool HasProperty(const WebString& name) const { return false; }
 		JSValue GetProperty(const WebString& name) const { return *(new JSValue()); }; // DUMB
-		void SetProperty(const WebString& name, const JSValue& value) {};
-		void SetPropertyAsync(const WebString& name, const JSValue& value) {};
+		void SetProperty(const WebString& name, const JSValue& value) {
+			debug_log("setprop");
+		};
+		void SetPropertyAsync(const WebString& name, const JSValue& value) {
+			debug_log("setpropa");
+		};
 		void RemoveProperty(const WebString& name) {};
 		JSArray GetMethodNames() const { return *(new JSArray()); }; // DUMB
 		bool HasMethod(const WebString& name) const { return false; };
@@ -788,20 +619,21 @@ namespace Awesomium
 	{
 	public:
 		static WebCore* Initialize(const WebConfig& config)  {
-			debug_log("WEBCORE INIT");
-
 			// We don't ACTUALLY have to deal with the config,
 			// we'll whip up our own config for CEF. Relevant details are:
 
 			// USERAGENT = Mozilla/5.0 (Windows; Valve Source Client) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1003.1 Safari/535.19 Awesomium/1.7.5.1 GMod/13
 			// PARAMS = --allow-file-access-from-files
 			
+			if (instance_ != nullptr)
+				panic("Initialized WebCore twice!");
+
 			instance_ = new WebCore();
 
 			return instance_;
 		};
 		static void Shutdown() {
-			debug_log("WEBCORE SHUTDOWN");
+			CefShutdown();
 		};
 		static WebCore* instance() {
 			return instance_;
@@ -835,7 +667,7 @@ namespace Awesomium
 			return new ResourceInterceptor();
 		};
 		virtual void Update() {
-			//debug_log("UPDATE!!!");
+			CefDoMessageLoopWork();
 		};
 		virtual void Log(const WebString& message, int severity, const WebString& file, int line) {
 			debug_log("LOG!!!");
@@ -852,7 +684,34 @@ namespace Awesomium
 		virtual ~WebCore() { debug_log("Delete webcore!"); }
 
 	private:
-		WebCore() {};
+		WebCore() {
+			CefMainArgs args;
+
+			CefSettings settings;
+			settings.command_line_args_disabled = true;
+			CefString(&settings.browser_subprocess_path).FromASCII("gmod_cef.exe");
+			settings.no_sandbox = true; // define CEF_USE_SANDBOX if you want this?
+
+			//settings.multi_threaded_message_loop = true;
+
+			//CefRefPtr<DumbApp> app_ref(new DumbApp);
+
+			bool cef_magic = CefInitialize(args, settings, nullptr, nullptr);
+
+			if (cef_magic)
+				debug_log("CEF GOOD");
+			else
+				debug_log("CEF BAD"); //*/
+			
+			//CefBrowser::Creat
+
+			makeThatWindow();
+
+			//CefRunMessageLoop();
+
+			//CefSettings settings;
+			//CefBrowserSettings browserSettings;
+		};
 		static WebCore* instance_;
 	};
 

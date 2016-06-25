@@ -41,7 +41,6 @@ namespace Awesomium {
 		};
 
 		const wchar_t* data() const {
-			debug_log(__FUNCTION__"__LINE__");
 			return internal_string->c_str();
 		};
 
@@ -51,7 +50,6 @@ namespace Awesomium {
 		};
 
 		bool IsEmpty() const {
-			debug_log(__FUNCTION__"__LINE__");
 			return internal_string->empty();
 		};
 
@@ -95,8 +93,13 @@ namespace Awesomium {
 		};
 
 		unsigned int ToUTF8(char*dest, unsigned int len) const {
-			debug_log(__FUNCTION__"__LINE__");
-			return 1;
+			std::string byte_str = internal_string->ToString(); // THIS MAY BE WRONG AS WELL!
+
+			int i;
+			for (i = 0; i < len && i < byte_str.length(); i++)
+				dest[i] = byte_str[i];
+
+			return byte_str.length(); // AFAIK WE NEED TO RETURN THE EXPECTED SIZE OF THE BYTE STRING!
 		};
 
 		bool operator==(const WebString&other) const {
@@ -127,20 +130,13 @@ namespace Awesomium {
 		};
 	};
 
-	template<class T>
-	class WebVector {
-	public:
-		std::vector<T> vector;
-	};
-
 	class DllExport WebStringArray {
 	public:
 		WebStringArray() {
-			vector_ = new WebVector<WebString>();
+			vector_ = new std::vector<WebString>();
 		};
 		explicit WebStringArray(unsigned int n) {
-			vector_ = new WebVector<WebString>();
-			vector_->vector.resize(n);
+			vector_ = new std::vector<WebString>(n);
 		};
 		WebStringArray(const WebStringArray& rhs) {
 			debug_log(__FUNCTION__"__LINE__");
@@ -154,31 +150,65 @@ namespace Awesomium {
 			return *this;
 		};
 
-		unsigned int size() const { return vector_->vector.size(); };
+		unsigned int size() const { return vector_->size(); };
 
 		WebString& At(unsigned int idx) {
-			return vector_->vector.at(idx);
+			return vector_->at(idx);
 		};
 		const WebString& At(unsigned int idx) const {
-			return vector_->vector.at(idx);
+			return vector_->at(idx);
 		};
 		WebString& operator[](unsigned int idx) {
-			return vector_->vector[idx];
+			return (*vector_)[idx];
 		};
 		const WebString& operator[](unsigned int idx) const {
-			return vector_->vector[idx];
+			return (*vector_)[idx];
 		};
 		void Push(const WebString& item) {
-			vector_->vector.push_back(item);
+			vector_->push_back(item);
 		};
 
-		friend std::ostream& operator<<(std::ostream& stream, const WebStringArray& arr) {
-			for (auto x : arr.vector_->vector)
-				stream << " -> " << x << std::endl;
-			return stream;
-		}
-
 	protected:
-		WebVector<WebString>* vector_;  // <- We just need to leave this in as a dummy. Hopefully.
+		std::vector<WebString>* vector_;
+	};
+
+	class DllExport WebURL
+	{
+	public:
+		WebURL() {
+			instance_ = new WebString();
+		};
+		explicit WebURL(const WebString&str) {
+			instance_ = new WebString(str);
+		};
+		WebURL(const WebURL&rhs) {
+			instance_ = new WebString(*rhs.instance_);
+		};
+
+		~WebURL() { delete instance_; };
+
+		WebURL& operator=(const WebURL&rhs) { debug_log(__FUNCTION__"__LINE__"); return *this; };
+
+		bool IsValid() const { debug_log(__FUNCTION__"__LINE__"); return true; };
+		bool IsEmpty() const { debug_log(__FUNCTION__"__LINE__"); return false; };
+		WebString spec() const { return *instance_; }; // THIS GETS YOU THE ACTUAL URL!
+		WebString scheme() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString username() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString password() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString host() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString port() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString path() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString query() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString anchor() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+		WebString filename() const { debug_log(__FUNCTION__"__LINE__"); return WebString(); };
+
+		bool operator==(const WebURL& other) const { debug_log(__FUNCTION__"__LINE__"); return false; };
+		bool operator!=(const WebURL& other) const { debug_log(__FUNCTION__"__LINE__"); return false; };
+		bool operator<(const WebURL& other) const { debug_log(__FUNCTION__"__LINE__"); return false; };
+
+
+	private:
+		explicit WebURL(const void* internal_instance);
+		WebString* instance_;
 	};
 }

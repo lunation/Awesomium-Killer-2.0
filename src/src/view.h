@@ -146,9 +146,13 @@ namespace Awesomium
 		virtual JSValue CreateGlobalJavascriptObject(const WebString& name) {
 			debug_stream << "GET " << name << std::endl;
 
-			//CefRefPtr<CefV8Value> globals =	browser->GetMainFrame()->GetV8Context()->GetGlobal();
+			if (!globals.HasProperty(name))
+				globals.SetProperty(name, JSValue(JSObject()) );
+			return globals.GetProperty(name);
 
-			/*debug_stream << "Have globals!" << std::endl;
+
+			//CefRefPtr<CefV8Value> globals =	browser->GetMainFrame()->GetV8Context()->GetGlobal();
+						/*debug_stream << "Have globals!" << std::endl;
 
 			CefRefPtr<CefV8Value> val = globals->GetValue(name.data());
 
@@ -159,7 +163,7 @@ namespace Awesomium
 			else
 				debug_stream << "OKAY" << std::endl;
 				*/
-			return *(new JSValue());
+			//return *(new JSValue());
 		};
 		virtual void ExecuteJavascript(const WebString& script, const WebString& frame_xpath) { debug_log(__FUNCTION__); };
 		virtual JSValue ExecuteJavascriptWithResult(const WebString& script, const WebString& frame_xpath) {
@@ -192,18 +196,28 @@ namespace Awesomium
 			#if defined(OS_WIN)
 				// On Windows we need to specify certain flags that will be passed to
 				// CreateWindowEx().
-				window_info.SetAsPopup(NULL, "Not gonna happen, huh?");
+				window_info.SetAsPopup(NULL, "Ain't gonna happen, huh?");
 			#endif
 
-			CefRefPtr<GarryClient> client(new GarryClient()); // TODO REPLACE WITH CLIENT FROM SESSION!
+			CefRefPtr<CefClient> client(session->client); // TODO REPLACE WITH CLIENT FROM SESSION!
 
-			std::string url;
+			std::string url("xyzzy"); // if we don't have some url to navigate to, we'll end up in a deadlock when javascript IPCs run
 
 			CefBrowserSettings browser_settings;
 
 			browser = CefBrowserHost::CreateBrowserSync(window_info, client, url, browser_settings, NULL);
+
+			globals = JSObject(this, getNextGlobalID());
 		}
 		~WebView() { debug_log(__FUNCTION__); }
+
+		int getNextGlobalID() {
+			return next_global_id++;
+		}
+
+		CefRefPtr<CefBrowser> getCefBrowser() {
+			return browser;
+		}
 
 		void*proclist;
 		void*menulist;
@@ -215,5 +229,56 @@ namespace Awesomium
 	private:
 		WebSession* session_;
 		CefRefPtr<CefBrowser> browser;
+		JSObject globals;
+		int next_global_id = -1; // global object takes this!
 	};
+
+
+	void JSObject_Global::set(const WebString& name, const JSValue& value, bool wait) {
+		auto msg = CefProcessMessage::Create("garry_js_set_global");
+		auto args = msg->GetArgumentList();
+		args->SetInt(0, index);
+		args->SetString(1, name.data());
+		
+		// always grab a new id -- everything in the global table uses one!
+		int new_id = browser->getNextGlobalID();
+
+		if (value.IsObject()) {
+			
+
+			args->SetInt(2, JsValueType::Object);
+			browser->getCefBrowser()->SendProcessMessage(PID_RENDERER, msg);
+
+			auto newObj = JSObject(browser, new_id);
+			value.ToObject().copyTo(newObj);
+			auto newValue = JSValue(newObj);
+
+			JSObject_Local::set(name, newValue, wait);
+		}
+		else {
+			panic("unknown child for global");
+
+			JSObject_Local::set(name, value, wait);
+		}
+
+		
+
+		//JSObject_Local::set(name, value, wait);
+	}
+
+	void JSObject_Global::setCustomMethod(const WebString& name, bool has_return_value) {
+		if (!has_return_value)
+			panic("custom methods usually have a return value, one didnt!");
+
+		// always grab a new id -- everything in the global table uses one!
+		int new_id = browser->getNextGlobalID();
+		
+		auto msg = CefProcessMessage::Create("garry_js_set_global");
+		auto args = msg->GetArgumentList();
+		args->SetInt(0, index);
+		args->SetString(1, name.data());
+		args->SetInt(2, JsValueType::CustomMethod);
+		
+		browser->getCefBrowser()->SendProcessMessage(PID_RENDERER, msg);
+	}
 }

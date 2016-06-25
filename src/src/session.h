@@ -19,13 +19,42 @@ namespace Awesomium {
 		virtual ~WebSession() { debug_log(__FUNCTION__); }
 
 	public:
+		WebSession();
+
 		std::unordered_map<std::wstring, DataSource*> data_sources;
+		CefRefPtr<CefClient> client;
 	};
 
 	class GarryClient : public CefClient {
 	public:
 		GarryClient() { };
 		~GarryClient() { };
+
+		bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message) OVERRIDE {
+			
+			if (message->GetName() == "garry_js_result_value") {
+				//js_ipc_complete = true;
+
+				debug_log("FIX ME BROKEN IPC");
+
+				/*switch (message->GetArgumentList()->GetInt(0)) {
+				case JsValueType::Object:
+					js_ipc_result = JSValue(JSObject( message->GetArgumentList()->GetInt(1) ));
+					break;
+				case JsValueType::Undefined:
+					js_ipc_result = JSValue::Undefined();
+					break;
+
+				case JsValueType::Unknown:
+					debug_log("HYP UNKNOWN");
+					break;
+				}*/
+
+				return true;
+			}
+			
+			return false;
+		}
 
 		/*virtual CefRefPtr<CefRequestHandler> GetResourc() OVERRIDE {
 			debug_log("fuckshitstack!!!");
@@ -108,6 +137,10 @@ namespace Awesomium {
 		// Include the default reference counting implementation.
 		IMPLEMENT_REFCOUNTING(GarryClient)
 	};
+
+	WebSession::WebSession() {
+		client = new GarryClient();
+	}
 }
 
 /*class GarrySchemeHandlerFactory : public CefSchemeHandlerFactory

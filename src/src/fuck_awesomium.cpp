@@ -41,9 +41,10 @@ void panic(const char* msg) {
 
 #include "req_res.h"
 
-#include "session.h"
-
+#include "js_interface.h"
 #include "javascript.h"
+
+#include "session.h"
 
 #include "view.h"
 
@@ -59,28 +60,23 @@ namespace Awesomium {
 	{
 	public:
 		virtual Awesomium::ResourceResponse* OnRequest(void* request) {
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 			return 0;
 		}
 		virtual bool OnFilterNavigation(int origin_process_id, int origin_routing_id, const Awesomium::WebString& method, const Awesomium::WebURL& url, bool is_main_frame) {
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 			return false;
 		}
 		virtual void OnWillDownload(int origin_process_id, int origin_routing_id, const Awesomium::WebURL& url) {
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 		}
 		virtual ~ResourceInterceptor() {
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 		}
 	};
 
 	class GarryResourceHandler : public CefResourceHandler {
 	public:
-		/*~GarryResourceHandler() {
-			debug_log("clean handler");
-			if (filled)
-				delete filled;
-		}*/
 
 		bool ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) OVERRIDE;
 
@@ -190,6 +186,7 @@ namespace Awesomium {
 			// ignore preferences, assume singleton
 			if (!session)
 				session = new WebSession;
+
 			return session;
 		};
 

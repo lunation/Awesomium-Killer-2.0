@@ -30,7 +30,7 @@ struct BrowserData {
 
 std::unordered_map<int, BrowserData> browser_table;
 
-class SubApp : public CefApp, public CefRenderProcessHandler, public CefV8Handler {
+class SubApp : public CefApp, public CefRenderProcessHandler {
 public:
 	virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() OVERRIDE {
 		return this;
@@ -62,8 +62,6 @@ public:
 
 			int parent_id = args->GetInt(0);
 			CefString key = args->GetString(1);
-
-			int new_id;
 
 			GlobalInitRecord* gir;
 
@@ -133,13 +131,40 @@ public:
 	}
 
 	void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) OVERRIDE {
+		
+		cef_log(0, 0, 0, "ENTER");
 		std::vector<GlobalInitRecord*>& data = browser_table[browser->GetIdentifier()].global_data;
 		std::vector<CefRefPtr<CefV8Value>> global_build_array;
 
+		CefRefPtr<CefV8Value> makeFunc;
+		CefRefPtr<CefV8Exception> err;
+
+		// Function MUST be wrapped in parens or it will fail to compile (wtf?)
+		bool success = context->Eval(R"(
+			(function(id,name) {
+				return function() {
+					var request = new XMLHttpRequest();
+					request.open("POST", "asset://call/"+id+"/"+name+"/"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
+					request.send(); // arguments
+					if (request.status==200) {
+						return request.responseText;
+					} else {
+						return "result bad";
+					}
+				}
+			})
+		)", makeFunc, err);
+
 		auto global = context->GetGlobal();
+
+		auto makeFuncArgs = CefV8ValueList(2);
+
+		cef_log(0, 0, 0, "xyzzy");
 
 		for (int i = 0; i < data.size(); i++) {
 			
+			cef_log(0, 0, 0, "~~");
+
 			CefRefPtr<CefV8Value> new_value;
 
 			switch (data[i]->type) {
@@ -147,9 +172,13 @@ public:
 				new_value = CefV8Value::CreateObject(nullptr);
 				break;
 			case CustomMethod:
-				cef_log(0, 0, 0, "->");
-				new_value = CefV8Value::CreateFunction("xyzzy", this);
-				cef_log(0, 0, 0, "<-");
+				cef_log(0, 0, 0, "s0");
+				makeFuncArgs[0] = CefV8Value::CreateInt(data[i]->parent_id);
+				cef_log(0, 0, 0, "s1");
+				makeFuncArgs[1] = CefV8Value::CreateString(data[i]->key);
+				cef_log(0, 0, 0, "s2");
+				new_value = makeFunc->ExecuteFunction(nullptr, makeFuncArgs);
+				//new_value = context->
 				break;
 			default:
 				cef_log(0, 0, 0, "???");
@@ -160,20 +189,20 @@ public:
 				global->SetValue(data[i]->key,  new_value, cef_v8_propertyattribute_t::V8_PROPERTY_ATTRIBUTE_NONE ); // not sure about this property thing, check back later!
 			}
 			else {
-				cef_log(0, 0, 0, "*1");
 				global_build_array[data[i]->parent_id]->SetValue(data[i]->key, new_value, cef_v8_propertyattribute_t::V8_PROPERTY_ATTRIBUTE_NONE); // not sure about this property thing, check back later!
-				cef_log(0, 0, 0, "*2");
 			}
 
 			global_build_array.push_back(new_value);
 		}
+
+		cef_log(0, 0, 0, "EXIT");
 	}
 
-	bool Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval, CefString& exception) OVERRIDE {
+	/*bool Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval, CefString& exception) OVERRIDE {
 		cef_log(0, 0, 0, ("ran func " + name.ToString()).c_str() );
 
 		return true;
-	}
+	}*/
 private:
 	IMPLEMENT_REFCOUNTING(SubApp);
 };

@@ -37,6 +37,15 @@ namespace Awesomium
 	typedef HANDLE ProcessHandle;
 	typedef HWND NativeWindow;
 
+	class JSMethodHandler {
+	public:
+		virtual void OnMethodCall(Awesomium::WebView* caller, unsigned int remote_object_id, const Awesomium::WebString& method_name, const Awesomium::JSArray& args) = 0;
+		virtual Awesomium::JSValue OnMethodCallWithReturnValue(Awesomium::WebView* caller, unsigned int remote_object_id, const Awesomium::WebString& method_name, const Awesomium::JSArray& args) = 0;
+		virtual ~JSMethodHandler() {}
+	};
+
+	std::unordered_map<int, WebView*> browser_map;
+
 	// A goddamn window
 	class DllExport WebView
 	{
@@ -170,8 +179,13 @@ namespace Awesomium
 			debug_log(__FUNCTION__);
 			return *(new JSValue());
 		};
-		virtual void set_js_method_handler(void* handler) { debug_log(__FUNCTION__); jshandler = handler; };
-		virtual void* js_method_handler() { debug_log(__FUNCTION__); return jshandler; };
+
+		virtual void set_js_method_handler(JSMethodHandler* handler) {
+			debug_log( std::to_string( (int)handler ).c_str() ) ;
+			jshandler = handler;
+		};
+		virtual void* js_method_handler() { return jshandler; };
+
 		virtual void set_sync_message_timeout(int timeout_ms) { debug_log(__FUNCTION__); };
 		virtual int sync_message_timeout() { debug_log(__FUNCTION__); return 0; };
 		virtual void DidSelectPopupMenuItem(int item_index) { debug_log(__FUNCTION__); };
@@ -201,13 +215,17 @@ namespace Awesomium
 
 			CefRefPtr<CefClient> client(session->client); // TODO REPLACE WITH CLIENT FROM SESSION!
 
-			std::string url("xyzzy"); // if we don't have some url to navigate to, we'll end up in a deadlock when javascript IPCs run
+			std::string url; // -DISREGARD FOR NOW- if we don't have some url to navigate to, we'll end up in a deadlock when javascript IPCs run
 
 			CefBrowserSettings browser_settings;
 
 			browser = CefBrowserHost::CreateBrowserSync(window_info, client, url, browser_settings, NULL);
 
 			globals = JSObject(this, getNextGlobalID());
+
+			browser_map[browser->GetIdentifier()] = this; // remove?
+
+			
 		}
 		~WebView() { debug_log(__FUNCTION__); }
 
@@ -225,14 +243,13 @@ namespace Awesomium
 		void*printlist;
 		void*downloadlist;
 		void*inputlist;
-		void*jshandler;
+		JSMethodHandler*jshandler;
 	private:
 		WebSession* session_;
 		CefRefPtr<CefBrowser> browser;
 		JSObject globals;
-		int next_global_id = -1; // global object takes this!
+		int next_global_id = -1; // root object takes this!
 	};
-
 
 	void JSObject_Global::set(const WebString& name, const JSValue& value, bool wait) {
 		auto msg = CefProcessMessage::Create("garry_js_set_global");
@@ -281,4 +298,23 @@ namespace Awesomium
 		
 		browser->getCefBrowser()->SendProcessMessage(PID_RENDERER, msg);
 	}
+
+	void JsCallDataSource::OnRequest(int id, const ResourceRequest& request, const WebString& path) {
+
+		js_call_lock.lock();
+		
+		debug_log("args");
+		JSArray x;
+		x.Push(JSValue(WebString(L"RERR")));
+		debug_log("precall");
+		debug_stream << "CALL THREAD " << GetCurrentThreadId() << std::endl;
+		req_view->jshandler->OnMethodCallWithReturnValue(req_view, 0, WebString(L"log"), x);
+		debug_log("postcall");
+
+		debug_stream << "=========================>>>>>>> " << path << std::endl;
+		SendResponse(id, 10, (unsigned const char*)"xxxxxxxxxx", WebString(L"application/json"));
+
+		js_call_lock.unlock();
+	};
+
 }

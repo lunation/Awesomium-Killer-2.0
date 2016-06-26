@@ -8,9 +8,11 @@ namespace Awesomium {
 	public:
 		JSValue_Internal() { }
 		JSValue_Internal(const JSValue_Internal& other) {
-
 			if (other.type == Object) {
 				setObject(*other.data_object);
+			}
+			else if (other.type == String) {
+				setString(*other.data_string);
 			}
 			else {
 				type = other.type;
@@ -23,25 +25,54 @@ namespace Awesomium {
 		}
 
 		void reset() {
-			if (type == Object) {
+			debug_log("begin reset");
+
+			if (type == Object || type == String) {
 				delete data;
 			}
+
+			debug_log("end reset");
 		}
 
-		void setObject(const JSObject& val);
 		JSObject* getObject() {
 			if (type != Object)
 				panic("tried to get object from nonobject");
 			return data_object;
 		}
+		void setObject(const JSObject& val);
 		bool isObject() {
 			return type == Object;
+		}
+
+		WebString getString() {
+			//debug_log("a");
+			if (type != String)
+				panic("tried to get string from nonstring");
+			/*debug_log("b");
+			if (data_string != nullptr)
+				debug_log("c");
+			if (data_string->data() != nullptr)
+				debug_log("d");
+*/
+			//debug_log(  (CefString( data_string->data() ).ToString() + " " + std::to_string(data_string->length())) .c_str() );
+			return *data_string;
+		}
+		void setString(const WebString& val) {
+			reset();
+			type = String;
+			data_string = new WebString(val);
+			debug_log(data_string->data() != nullptr ? "gud" : "bade");
+		}
+		
+		bool isType(JsValueType t) {
+			return type == t;
 		}
 		
 	private:
 		union {
 			void* data;
 			JSObject* data_object;
+			WebString* data_string;
 		};
 
 		JsValueType type = Undefined;
@@ -58,7 +89,10 @@ namespace Awesomium {
 		explicit JSValue(int val) { debug_log("NEW JSVALUE3"); };
 		explicit JSValue(double val) { debug_log("NEW JSVALUE4"); };
 		
-		JSValue(const WebString& val) { debug_log("COPY JSVALUE"); };
+		JSValue(const WebString& val) {
+			value = new JSValue_Internal();
+			value->setString(val);
+		};
 		JSValue(const JSObject& val) {
 			value = new JSValue_Internal();
 			value->setObject(val);
@@ -76,9 +110,9 @@ namespace Awesomium {
 		}; // we PROBABLY just want shallow copies (copy the handle only)
 
 		~JSValue() {
-			//debug_log("~kill");
+			debug_log("~kill");
 			delete value;
-			//debug_log("~~kill");
+			debug_log("~~kill");
 		};
 
 
@@ -100,17 +134,23 @@ namespace Awesomium {
 			return *_null;
 		};
 
-		bool IsBoolean() const { debug_log(__FUNCTION__); return true; };
-		bool IsInteger() const { debug_log(__FUNCTION__); return true; };
-		bool IsDouble() const { debug_log(__FUNCTION__); return true; };
-		bool IsNumber() const { debug_log(__FUNCTION__); return true; };
-		bool IsString() const { debug_log(__FUNCTION__); return true; };
-		bool IsArray() const { debug_log(__FUNCTION__); return true; };
+		bool IsBoolean() const { debug_log(__FUNCTION__); return false; };
+		bool IsInteger() const { debug_log(__FUNCTION__); return false; };
+		bool IsDouble() const { debug_log(__FUNCTION__); return false; };
+		bool IsNumber() const { debug_log(__FUNCTION__); return false; };
+		bool IsString() const { debug_log(__FUNCTION__); return value->isType(String); };
+		bool IsArray() const { debug_log(__FUNCTION__); return false; };
 		bool IsObject() const { return value->isObject(); };
 		bool IsNull() const { debug_log(__FUNCTION__); return false; };
-		bool IsUndefined() const { debug_log(__FUNCTION__); return false; };
+		bool IsUndefined() const { debug_log(__FUNCTION__); return value->isType(JsValueType::Undefined); };
 
-		WebString ToString() const { debug_log(__FUNCTION__); return WebString(); };
+		WebString ToString() const {
+			debug_log(__FUNCTION__);
+			auto str = value->getString();
+			//debug_log(",,");
+			//debug_log( CefString(str.data()).ToString().c_str() );
+			return str;
+		};
 		int ToInteger() const { debug_log(__FUNCTION__); return 1; };
 		double ToDouble() const { debug_log(__FUNCTION__); return 1; };
 		bool ToBoolean() const { debug_log(__FUNCTION__); return true; };
@@ -154,35 +194,67 @@ namespace Awesomium {
 	class DllExport JSArray
 	{
 	public:
-		explicit JSArray() { debug_log("NEW JSARRAY"); };
+		explicit JSArray() {
+			debug_log("NEW JSARRAY");
+			vector = new std::vector<JSValue>();
+		};
 		JSArray(unsigned int n) { debug_log("NEW JSARRAY2"); };
 		JSArray(const JSArray &rhs) { debug_log("COPY JSARRAY"); };
 		JSArray & operator=(const JSArray&rhs) {
+			debug_log(__FUNCTION__);
 			return *this;
 		};
 
-		unsigned int size() const { return 1; };
-		unsigned int capacity() const { return 1; };
-		JSValue & At(unsigned int idx) { return value; };
-		const JSValue & At(unsigned int idx) const { return value; };
+		~JSArray() {
+			debug_log(__FUNCTION__);
+			delete vector;
+			debug_log("finish delete array");
+		}
+
+		unsigned int size() const {
+			debug_log(__FUNCTION__);
+			debug_stream << vector->size() << std::endl;
+			return vector->size();
+		};
+
+		unsigned int capacity() const {
+			debug_log(__FUNCTION__);
+			return 1;
+		};
+		
+		JSValue & At(unsigned int idx) {
+			debug_log(__FUNCTION__);
+			return vector->at(idx);
+		};
+		
+		const JSValue & At(unsigned int idx) const {
+			debug_log(__FUNCTION__);
+			return vector->at(idx);
+		};
 
 		JSValue & operator[](unsigned int idx) {
-			return value;
+			debug_log(__FUNCTION__);
+			return (*vector)[idx];
 		};
 
 		const JSValue & operator[](unsigned int idx) const {
-			return value;
+			debug_log(__FUNCTION__);
+			return (*vector)[idx];
 		}
 
-		void Push(const JSValue&item) {};
-		void Pop() {};
-		void Insert(const JSValue&item, unsigned int idx) {};
-		void Erase(unsigned int idx) {};
-		void Clear() {};
+		void Push(const JSValue&item) {
+			debug_log(__FUNCTION__);
+			vector->push_back(item);
+		};
+		void Pop() { debug_log(__FUNCTION__); };
+		void Insert(const JSValue&item, unsigned int idx) { debug_log(__FUNCTION__); };
+		void Erase(unsigned int idx) { debug_log(__FUNCTION__); };
+		void Clear() { debug_log(__FUNCTION__); };
 
 	protected:
-		WebVector<JSValue>* vector_;
-		JSValue value;
+		//WebVector<JSValue>* vector_;
+		std::vector<JSValue>* vector;
+		//JSValue value;
 	};
 
 	class WebView;
@@ -289,6 +361,7 @@ namespace Awesomium {
 
 		unsigned int remote_id() const {
 			debug_log("remote id");
+			debug_stream << object->getRemoteId() << std::endl;
 			return object->getRemoteId();
 		};
 

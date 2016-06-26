@@ -5,6 +5,8 @@
 #include <string>
 #include <cstring>
 
+#include <mutex>
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -33,6 +35,8 @@ void panic(const char* msg) {
 	exit(1);
 }
 
+std::mutex js_call_lock;
+
 #include "enums.h"
 
 #include "string.h"
@@ -49,6 +53,7 @@ void panic(const char* msg) {
 #include "view.h"
 
 namespace Awesomium {
+
 	// Empty - wat?
 	class DllExport SurfaceFactory
 	{
@@ -78,38 +83,43 @@ namespace Awesomium {
 	class GarryResourceHandler : public CefResourceHandler {
 	public:
 
+		GarryResourceHandler(WebView* owner) {
+			this->owner = owner;
+		}
+
 		bool ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) OVERRIDE;
 
-		void GetResponseHeaders(CefRefPtr<CefResponse> response, int64& response_length, CefString& redirectUrl) OVERRIDE {
-			filled = source->GetFilledReq(id);
+		void GetResponseHeaders(CefRefPtr<CefResponse> res, int64& res_len, CefString& redirectUrl) OVERRIDE {
+			debug_log("head start");
+			//if (source != nullptr)
+			//	filled = source->GetFilledReq(id);
 
-			if (filled == nullptr) // garry's handers seem to complete immidately, so hopefully this won't be a problem
-				panic("Headers not ready. This really needs de-fucked..."); // if it is, we'll need to redesign some shit.
+			//if (filled == nullptr) // garry's handers seem to complete immidately, so hopefully this won't be a problem
+			//	panic("Headers not ready. This really needs de-fucked..."); // if it is, we'll need to redesign some shit.
 
-			response_length = filled->len;
+			res_len = response.len;
 			
-			if (response_length == 0) {
-				delete filled;
+			if (res_len == 0) {
+				res->SetStatus(400);
 				return;
 			}
 
-			response->SetMimeType(filled->mime);
+			res->SetStatus(200);
+			res->SetMimeType(response.mime);
 			index = 0;
+			debug_log("head end");
 		}
 
 		bool ReadResponse(void* data_out, int bytes_to_read, int& bytes_read, CefRefPtr<CefCallback> callback) OVERRIDE {
-
+			debug_log("read start");
 			int i;
 			for (i = 0; i < bytes_to_read; i++) {
-				((char*)data_out)[i] = filled->data[index++];
+				((char*)data_out)[i] = response.data[index++];
 			}
 
 			bytes_read = i;
 
-			if (index == filled->len) {
-				delete filled;
-			}
-
+			debug_log("read end");
 			return true;
 		}
 
@@ -117,10 +127,10 @@ namespace Awesomium {
 			debug_log(__FUNCTION__);
 		}
 	private:
-		DataSource* source;
-		FilledReq* filled = 0;
-		int id;
-		int index;
+		//DataSource* source = 0;
+		SimpleResponse response;
+		int index = 0;
+		WebView* owner;
 
 		IMPLEMENT_REFCOUNTING(GarryResourceHandler);
 	};
@@ -130,11 +140,12 @@ namespace Awesomium {
 	public:
 		CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& scheme_name, CefRefPtr<CefRequest> request) OVERRIDE {
 			debug_stream << request->GetURL().ToString() << std::endl;
-			return new GarryResourceHandler();
+			return new GarryResourceHandler(browser_map[browser->GetIdentifier()]);
 		}
 	private:
 		IMPLEMENT_REFCOUNTING(GarrySchemeHandlerFactory);
 	};
+
 
 	/*class GarryApp : public CefApp {
 	public:
@@ -169,6 +180,8 @@ namespace Awesomium {
 
 			instance_ = new WebCore();
 
+			js_call_lock.lock();
+
 			return instance_;
 		};
 		static WebCore* instance() {
@@ -184,6 +197,7 @@ namespace Awesomium {
 
 		virtual WebSession* CreateWebSession(const WebString& path, const WebPreferences& prefs) {
 			// ignore preferences, assume singleton
+			debug_log("=====================================NEW SESSION===================================");
 			if (!session)
 				session = new WebSession;
 
@@ -217,11 +231,13 @@ namespace Awesomium {
 		};
 
 		virtual void Update() {
+			js_call_lock.unlock();
 			CefDoMessageLoopWork();
+			js_call_lock.lock();
 		};
 
 		virtual void Log(const WebString& message, int severity, const WebString& file, int line) {
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 		};
 		virtual const char* version_string() const {
 			debug_log(__FUNCTION__"__LINE__");
@@ -252,8 +268,8 @@ namespace Awesomium {
 			if (!CefInitialize(args, settings, nullptr, nullptr))
 				panic("CEF Setup Failed!");
 
-			CefRefPtr<GarrySchemeHandlerFactory> handlerFactory = new GarrySchemeHandlerFactory();
-			CefRegisterSchemeHandlerFactory("asset", "", handlerFactory);
+			CefRefPtr<GarrySchemeHandlerFactory> garryFactory = new GarrySchemeHandlerFactory();
+			CefRegisterSchemeHandlerFactory("asset", "", garryFactory);
 
 			//makeThatWindow();
 		};
@@ -268,22 +284,47 @@ namespace Awesomium {
 
 	///////////////////////////////////////////////
 
-	bool GarryResourceHandler::ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) {
-		std::wstring url = request->GetURL();
+	bool GarryResourceHandler::ProcessRequest(CefRefPtr<CefRequest> req, CefRefPtr<CefCallback> callback) {
+		
+		std::wstring url = req->GetURL();
 
 		int host_start = 8;
 		int host_end = url.find_first_of('/', 8);
 
-		std::wstring host = url.substr(host_start, host_end - host_start);
+		CefString host = url.substr(host_start, host_end - host_start);
+
+		/*if (host == "call") { // totoally bypass awesomium's shit
+			filled = new FilledReq(10, (unsigned const char*)"xhfndosled", WebString(L"application/json") );
+
+			int call_split = url.find_first_of('/', host_end+1);
+			
+			int call_id = atoi( CefString(url.substr(host_end+1, call_split - host_end - 1)).ToString().c_str() );
+			CefString call_args = url.substr(call_split+1);
+
+			debug_log("args");
+			JSArray x;
+			x.Push(JSValue(WebString(L"RERR")));
+			debug_log("precall");
+			debug_stream << "CALL THREAD " << GetCurrentThreadId() << std::endl;
+			owner->jshandler->OnMethodCallWithReturnValue(owner, call_id, WebString(L"log"), x);
+			debug_log("postcall");
+
+
+			debug_stream << "please route! " << call_id << " ~ " << call_args.ToString() << " to " << owner << std::endl;
+			//debug_stream << request->GetPostData() << std::endl;
+			callback->Continue();
+			return true;
+		}*/
+
+		CefString path = url.substr(host_end + 1);
 
 		auto sources = &(WebCore::instance()->session->data_sources);
 
 		auto iter = sources->find(host);
 
+		
 		if (iter != sources->end()) {
-			source = iter->second;
-
-			std::wstring path = url.substr(host_end+1);
+			DataSource* source = iter->second;
 
 			// Double slashes can and will crash handlers. I AM AN IDIOT IGNORE THIS.
 			/*int pos;
@@ -292,7 +333,8 @@ namespace Awesomium {
 				debug_log("GOT 1");
 			}*/
 
-			id = source->FireReq(*request, path);
+			debug_log("FIRE");
+			source->ReqSync(owner, *req, path, &response);
 
 			callback->Continue();
 			return true;

@@ -95,11 +95,26 @@ namespace Awesomium {
 		unsigned int ToUTF8(char*dest, unsigned int len) const {
 			std::string byte_str = internal_string->ToString(); // THIS MAY BE WRONG AS WELL!
 
-			int i;
-			for (i = 0; i < len && i < byte_str.length(); i++)
-				dest[i] = byte_str[i];
+			debug_log("toutf8>");
+			debug_stream << (void*)dest << " " << len << std::endl;
 
-			return byte_str.length(); // AFAIK WE NEED TO RETURN THE EXPECTED SIZE OF THE BYTE STRING!
+			int i;
+			for (i = 0; i < len && i < byte_str.length(); i++) {
+				debug_stream << ">> " << byte_str[i] << std::endl;
+				dest[i] = byte_str[i];
+			}
+
+			if (i < len) {
+				debug_stream << ">> NULL" << std::endl;
+				dest[i] = 0;
+			}
+
+			if (dest != 0)
+				debug_stream << dest << std::endl;
+
+			debug_log("<toutf8");
+
+			return byte_str.length()+1; // AFAIK WE NEED TO RETURN THE EXPECTED SIZE OF THE BYTE STRING!
 		};
 
 		bool operator==(const WebString&other) const {
@@ -146,6 +161,7 @@ namespace Awesomium {
 		};
 
 		WebStringArray& operator=(const WebStringArray& rhs) {
+			delete vector_;
 			debug_log(__FUNCTION__"__LINE__");
 			return *this;
 		};

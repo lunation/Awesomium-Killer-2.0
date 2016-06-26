@@ -138,8 +138,13 @@ namespace Awesomium {
 		IMPLEMENT_REFCOUNTING(GarryClient)
 	};
 
+	class JsCallDataSource : public DataSource {
+		void OnRequest(int id, const ResourceRequest& request, const WebString& path) OVERRIDE;
+	};
+
 	WebSession::WebSession() {
 		client = new GarryClient();
+		AddDataSource( WebString(L"call"), new JsCallDataSource());
 	}
 }
 

@@ -56,33 +56,39 @@ namespace Awesomium {
 
 	class WebSession;
 
-	struct FilledReq {
-		FilledReq(unsigned int len, unsigned char const * data, WebString const &mime) {
-			this->len = len;
+	struct SimpleResponse {
+		void set(unsigned int new_len, unsigned char const * new_data, WebString const &new_mime) {
+			len = new_len;
 			
-			if (data != nullptr) {
-				this->data = new unsigned char[len];
-				std::memcpy(this->data, data, len);
+			if (data!=nullptr)
+				delete[] data;
+
+			if (new_data != nullptr) {
+				data = new unsigned char[len];
+				std::memcpy(data, new_data, len);
 			}
 			else {
-				this->data = nullptr;
+				data = nullptr;
 			}
 
-			if (mime.data() != nullptr)
-				this->mime = mime.data();
+			if (new_mime.data() != nullptr)
+				mime = new_mime.data();
+			else
+				mime = "";
 		}
 
-		~FilledReq() {
+		~SimpleResponse() {
 			if (data!=nullptr)
 				delete[] data;
 		}
 
 		unsigned int len;
-		unsigned char* data;
+		unsigned char* data = 0;
 		CefString mime;
 	};
 
-	// What is this?
+	class WebView;
+
 	class DllExport DataSource
 	{
 	public:
@@ -91,35 +97,30 @@ namespace Awesomium {
 		void SendResponse(int id, unsigned int buf, unsigned char*buff, const WebString& meme) { debug_log(__FUNCTION__"1"); };
 		void SendResponse(int id, unsigned int len, unsigned char const * data, WebString const &mime) {
 
-			filled_requests[this][id] = new FilledReq(len, data, mime);
+			debug_stream << "RESPOND " << GetCurrentThreadId() << std::endl;
 
+			if (id != data_source_id)
+				panic("Our datasources are still fucked god damn it.");
+
+			response->set(len, data, mime);
+			ready = true;
 		};
 
-		int FireReq(const CefRequest& request, const std::wstring path) {
+		// CALL FROM THE GODDAMNED IO THREAD
+		void ReqSync(WebView* view, const CefRequest& req, const std::wstring path, SimpleResponse* res) {
 
 			ResourceRequest awesome_req;
-
 			WebString webstr_path(path.c_str());
+
+			req_view = view;
+			ready = false;
+			response = res;
 
 			OnRequest(data_source_id, awesome_req, webstr_path);
 
-			return data_source_id++;
-		}
+			debug_stream << "WAITING " << GetCurrentThreadId() << std::endl;
 
-		// IT IS THE USER'S RESPONSIBILITY TO DELETE THE REQUEST!
-		FilledReq* GetFilledReq(int id) {
-
-			auto table = &filled_requests[this];
-
-			auto iter = table->find(id);
-
-			if (iter == table->end())
-				return nullptr;
-
-			auto result = iter->second;
-			table->erase(iter);
-
-			return result;
+			while (!ready);
 		}
 
 	protected:
@@ -129,10 +130,22 @@ namespace Awesomium {
 		int data_source_id = 0; 
 		friend class WebSessionImpl;
 
+	protected:
+		static WebView* req_view;
+
 	private:
+		// Hopefully there's never more than one IO thread lol.
+		// Possibly replace this with an actual mutex
+		static bool ready;
+		static SimpleResponse* response;
 		// we are NOT safe tacking stuff on. make static table of tables (ugh) to store filled reqs.
-		static std::unordered_map<DataSource*, std::unordered_map<int, FilledReq*>> filled_requests;
+		//static std::unordered_map<DataSource*, std::unordered_map<int, FilledReq*>> filled_requests;
 	};
 
-	std::unordered_map<DataSource*, std::unordered_map<int, FilledReq*>> DataSource::filled_requests;
+	WebView* DataSource::req_view = nullptr;
+
+	bool DataSource::ready = false;
+	SimpleResponse* DataSource::response = nullptr;
+
+	//std::unordered_map<DataSource*, std::unordered_map<int, FilledReq*>> DataSource::filled_requests;
 }

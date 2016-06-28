@@ -97,8 +97,6 @@ namespace Awesomium {
 		void SendResponse(int id, unsigned int buf, unsigned char*buff, const WebString& meme) { debug_log(__FUNCTION__"1"); };
 		void SendResponse(int id, unsigned int len, unsigned char const * data, WebString const &mime) {
 
-			debug_stream << "RESPOND " << GetCurrentThreadId() << std::endl;
-
 			if (id != data_source_id)
 				panic("Our datasources are still fucked god damn it.");
 
@@ -117,8 +115,6 @@ namespace Awesomium {
 			response = res;
 
 			OnRequest(data_source_id, awesome_req, webstr_path);
-
-			debug_stream << "WAITING " << GetCurrentThreadId() << std::endl;
 
 			while (!ready);
 		}

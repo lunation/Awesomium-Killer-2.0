@@ -132,7 +132,6 @@ public:
 
 	void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) OVERRIDE {
 		
-		cef_log(0, 0, 0, "ENTER");
 		std::vector<GlobalInitRecord*>& data = browser_table[browser->GetIdentifier()].global_data;
 		std::vector<CefRefPtr<CefV8Value>> global_build_array;
 
@@ -143,13 +142,15 @@ public:
 		bool success = context->Eval(R"(
 			(function(id,name) {
 				return function() {
+					if (window.location.protocol != "asset:")
+						return;
 					var request = new XMLHttpRequest();
 					request.open("POST", "asset://call/"+id+"/"+name+"/"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
-					request.send(); // arguments
+					request.send();
 					if (request.status==200) {
-						return request.responseText;
+						return JSON.parse(request.responseText);
 					} else {
-						return "result bad";
+						throw new Error("REMOTE CALL FAILED");
 					}
 				}
 			})
@@ -159,11 +160,7 @@ public:
 
 		auto makeFuncArgs = CefV8ValueList(2);
 
-		cef_log(0, 0, 0, "xyzzy");
-
 		for (int i = 0; i < data.size(); i++) {
-			
-			cef_log(0, 0, 0, "~~");
 
 			CefRefPtr<CefV8Value> new_value;
 
@@ -172,13 +169,11 @@ public:
 				new_value = CefV8Value::CreateObject(nullptr);
 				break;
 			case CustomMethod:
-				cef_log(0, 0, 0, "s0");
 				makeFuncArgs[0] = CefV8Value::CreateInt(data[i]->parent_id);
-				cef_log(0, 0, 0, "s1");
+
 				makeFuncArgs[1] = CefV8Value::CreateString(data[i]->key);
-				cef_log(0, 0, 0, "s2");
+
 				new_value = makeFunc->ExecuteFunction(nullptr, makeFuncArgs);
-				//new_value = context->
 				break;
 			default:
 				cef_log(0, 0, 0, "???");
@@ -194,8 +189,6 @@ public:
 
 			global_build_array.push_back(new_value);
 		}
-
-		cef_log(0, 0, 0, "EXIT");
 	}
 
 	/*bool Execute(const CefString& name, CefRefPtr<CefV8Value> object, const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval, CefString& exception) OVERRIDE {

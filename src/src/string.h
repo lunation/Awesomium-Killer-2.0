@@ -10,7 +10,7 @@ namespace Awesomium {
 			internal_string = new CefString;
 		};
 		explicit WebString(const WebString& src, unsigned int pos, unsigned int n) {
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 		};
 		explicit WebString(const wchar_t* data) {
 			internal_string = new CefString(data);
@@ -34,9 +34,15 @@ namespace Awesomium {
 
 		static WebString CreateFromUTF8(const char* str, unsigned int len)
 		{
+			/*debug_log("IN");
 			WebString newString;
-			newString.internal_string->FromASCII(str); // THIS IS PROBABLY TOTALLY FUCKING WRONG!!!!
-			
+			newString.internal_string->FromString (str); // THIS IS PROBABLY TOTALLY FUCKING WRONG!!!!
+			debug_log("OUT");*/
+			std::string tempString(str, len);
+
+			WebString newString;
+			newString.internal_string->FromString(tempString);
+
 			return newString;
 		};
 
@@ -45,7 +51,7 @@ namespace Awesomium {
 		};
 
 		unsigned int length() const {
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 			return internal_string->length();
 		};
 
@@ -55,7 +61,7 @@ namespace Awesomium {
 
 		int Compare(const WebString&src) const
 		{
-			debug_log(__FUNCTION__"__LINE__");
+			debug_log(__FUNCTION__);
 			return 1;
 		};
 
@@ -92,27 +98,18 @@ namespace Awesomium {
 			internal_string->clear();
 		};
 
+		// NOT SURE IF THE NULL TERMINATION THING IS NEEDED OR NOT, ADDED IT TO BE SAFE.
 		unsigned int ToUTF8(char*dest, unsigned int len) const {
 			std::string byte_str = internal_string->ToString(); // THIS MAY BE WRONG AS WELL!
 
-			debug_log("toutf8>");
-			debug_stream << (void*)dest << " " << len << std::endl;
-
 			int i;
 			for (i = 0; i < len && i < byte_str.length(); i++) {
-				debug_stream << ">> " << byte_str[i] << std::endl;
 				dest[i] = byte_str[i];
 			}
 
 			if (i < len) {
-				debug_stream << ">> NULL" << std::endl;
 				dest[i] = 0;
 			}
-
-			if (dest != 0)
-				debug_stream << dest << std::endl;
-
-			debug_log("<toutf8");
 
 			return byte_str.length()+1; // AFAIK WE NEED TO RETURN THE EXPECTED SIZE OF THE BYTE STRING!
 		};
@@ -136,6 +133,11 @@ namespace Awesomium {
 			return stream;
 		}
 
+		// TODO ESCAPE SPECIAL CHARS
+		std::string quote() {
+			return "\"" + internal_string->ToString() + "\"";
+		}
+
 	private:
 		CefString* internal_string;
 
@@ -143,6 +145,37 @@ namespace Awesomium {
 		explicit WebString(const void*internal_instance) {
 			debug_log(__FUNCTION__"__LINE__");
 		};
+	public:
+		// THIS IS NOT FOR PARSING JSON IN GENERAL! SEE JSValue::ParseJSON for that! This only parses string values!
+		static bool ParseJSON(const wchar_t*& str, WebString& x) {
+			if (*str++ != '"')
+				panic("tried to parse a string. IT AINT A FUCKIN STRING.");
+
+			std::vector<wchar_t> string_builder;
+
+			for (;;) {
+				wchar_t c = *str++;
+
+				if (c == '"')
+					break;
+
+				else if (c == '\\') {
+					switch (*str++) {
+					case '"':
+						string_builder.push_back('"');
+						break;
+					default:
+						debug_stream << *str << std::endl;
+						panic("Unknown escape seq");
+					}
+				}
+				else {
+					string_builder.push_back(c);
+				}
+			}
+			x = WebString(string_builder.data(),string_builder.size());
+			return true;
+		}
 	};
 
 	class DllExport WebStringArray {

@@ -28,7 +28,9 @@ solution "FuckAwesomium"
 	includedirs { "cef" }
 
 	--libdirs { "cef/Debug" }
-	libdirs { "cef/Debug", "cef/libcef_dll_wrapper/Debug" }
+
+	-- NOTE: The location of the wrapper lib changes a lot between CEF versions!
+	libdirs { "cef/Debug", "cef/libcef_dll/Debug" }
 	--links { "libcef", "cef_sandbox" }
 	links { "libcef", "libcef_dll_wrapper" }
 

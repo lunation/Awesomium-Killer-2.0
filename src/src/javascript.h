@@ -9,12 +9,16 @@ namespace Awesomium {
 		JSValue_Internal() { }
 		JSValue_Internal(const JSValue_Internal& other) {
 			if (other.type == Object) {
-				setObject(*other.data_object);
+				setObject(*other.data.object);
+			}
+			else if (other.type == Array) {
+				setArray(*other.data._array);
 			}
 			else if (other.type == String) {
-				setString(*other.data_string);
+				setString(*other.data.string);
 			}
 			else {
+				data = other.data;
 				type = other.type;
 			}
 
@@ -25,24 +29,25 @@ namespace Awesomium {
 		}
 
 		void reset() {
-			debug_log("begin reset");
 
-			if (type == Object || type == String) {
-				delete data;
+			if (type == Object || type == String || type == Array) {
+				delete data.ptr;
 			}
-
-			debug_log("end reset");
 		}
 
 		JSObject* getObject() {
 			if (type != Object)
 				panic("tried to get object from nonobject");
-			return data_object;
+			return data.object;
 		}
 		void setObject(const JSObject& val);
-		bool isObject() {
-			return type == Object;
+
+		JSArray* getArray() {
+			if (type != Array)
+				panic("tried to get array from nonarray");
+			return data._array;
 		}
+		void setArray(const JSArray& val);
 
 		WebString getString() {
 			//debug_log("a");
@@ -55,25 +60,66 @@ namespace Awesomium {
 				debug_log("d");
 */
 			//debug_log(  (CefString( data_string->data() ).ToString() + " " + std::to_string(data_string->length())) .c_str() );
-			return *data_string;
+			return *data.string;
 		}
 		void setString(const WebString& val) {
 			reset();
 			type = String;
-			data_string = new WebString(val);
-			debug_log(data_string->data() != nullptr ? "gud" : "bade");
+			data.string = new WebString(val);
 		}
 		
+
+		void setNumber(double n) {
+			reset();
+			type = Number;
+			data.number = n;
+		}
+		double getNumber() {
+			if (type != Number)
+				panic("tried to get number from nonnumber");
+			return data.number;
+		}
+
+		void setBool(bool val) {
+			reset();
+			type = Boolean;
+			data._bool = val;
+		}
+		bool getBool() {
+			if (type != Boolean)
+				panic("tried to get bool from nonbool");
+			return data._bool;
+		}
+
+
 		bool isType(JsValueType t) {
 			return type == t;
+		}
+
+		std::string toJSON() {
+			switch (type) {
+			case Undefined:
+				return "null";
+			case Boolean:
+				return data._bool ? "true" : "false";
+			case String:
+				return data.string->quote(); // QUOTE THIS
+			default:
+				debug_stream << type << std::endl;
+				panic("cant take ? to json");
+			}
+			return "";
 		}
 		
 	private:
 		union {
-			void* data;
-			JSObject* data_object;
-			WebString* data_string;
-		};
+			void* ptr;
+			JSObject* object;
+			JSArray* _array;
+			WebString* string;
+			double number;
+			bool _bool;
+		} data;
 
 		JsValueType type = Undefined;
 	};
@@ -85,10 +131,18 @@ namespace Awesomium {
 		JSValue() {
 			value = new JSValue_Internal();
 		};
-		explicit JSValue(bool val) { debug_log("NEW JSVALUE2"); };
-		explicit JSValue(int val) { debug_log("NEW JSVALUE3"); };
-		explicit JSValue(double val) { debug_log("NEW JSVALUE4"); };
-		
+		explicit JSValue(bool val) {
+			value = new JSValue_Internal();
+			value->setBool(val);
+		};
+		explicit JSValue(int val) {
+			value = new JSValue_Internal();
+			value->setNumber(val);
+		};
+		explicit JSValue(double val) {
+			value = new JSValue_Internal();
+			value->setNumber(val);
+		};
 		JSValue(const WebString& val) {
 			value = new JSValue_Internal();
 			value->setString(val);
@@ -97,7 +151,10 @@ namespace Awesomium {
 			value = new JSValue_Internal();
 			value->setObject(val);
 		};
-		JSValue(const JSArray &val) { debug_log("COPY JSVALUE3"); };
+		JSValue(const JSArray &val) {
+			value = new JSValue_Internal();
+			value->setArray(val);
+		};
 		
 		JSValue(const JSValue& orig) {
 			value = new JSValue_Internal(*orig.value);
@@ -110,9 +167,7 @@ namespace Awesomium {
 		}; // we PROBABLY just want shallow copies (copy the handle only)
 
 		~JSValue() {
-			debug_log("~kill");
 			delete value;
-			debug_log("~~kill");
 		};
 
 
@@ -134,35 +189,48 @@ namespace Awesomium {
 			return *_null;
 		};
 
-		bool IsBoolean() const { debug_log(__FUNCTION__); return false; };
-		bool IsInteger() const { debug_log(__FUNCTION__); return false; };
-		bool IsDouble() const { debug_log(__FUNCTION__); return false; };
-		bool IsNumber() const { debug_log(__FUNCTION__); return false; };
-		bool IsString() const { debug_log(__FUNCTION__); return value->isType(String); };
-		bool IsArray() const { debug_log(__FUNCTION__); return false; };
-		bool IsObject() const { return value->isObject(); };
+		bool IsBoolean() const { debug_log(__FUNCTION__); return value->isType(Boolean); };
+		bool IsInteger() const {
+			debug_log(__FUNCTION__);
+			double y;
+			return	value->isType(Number) && modf( value->getNumber(), &y ) == 0;
+		};
+		bool IsDouble() const { return value->isType(Number); };
+		bool IsNumber() const { return value->isType(Number); };
+		bool IsString() const { return value->isType(String); };
+		bool IsArray() const { value->isType(Array); return value->isType(Array); };
+		bool IsObject() const { return value->isType(Object); };
 		bool IsNull() const { debug_log(__FUNCTION__); return false; };
-		bool IsUndefined() const { debug_log(__FUNCTION__); return value->isType(JsValueType::Undefined); };
+		bool IsUndefined() const { return value->isType(JsValueType::Undefined); };
 
 		WebString ToString() const {
-			debug_log(__FUNCTION__);
 			auto str = value->getString();
 			//debug_log(",,");
 			//debug_log( CefString(str.data()).ToString().c_str() );
 			return str;
 		};
-		int ToInteger() const { debug_log(__FUNCTION__); return 1; };
-		double ToDouble() const { debug_log(__FUNCTION__); return 1; };
-		bool ToBoolean() const { debug_log(__FUNCTION__); return true; };
+		int ToInteger() const { debug_log(__FUNCTION__); return int(value->getNumber()); };
+		double ToDouble() const { return value->getNumber(); };
+		bool ToBoolean() const { return value->getBool(); };
 
-		JSArray& ToArray();
-		const JSArray& ToArray() const;
+		JSArray& ToArray() {
+			return *(value->getArray());
+		}
+		const JSArray& ToArray() const {
+			return *(value->getArray());
+		}
 
 		JSObject& ToObject() {
 			return *(value->getObject());
 		}
 		const JSObject& ToObject() const {
 			return *(value->getObject());
+		}
+
+		static bool ParseJSON(const wchar_t*& str, JSValue& x);
+		
+		std::string ToJSON() {
+			return value->toJSON();
 		}
 	private:
 		JSValue_Internal* value;
@@ -195,25 +263,23 @@ namespace Awesomium {
 	{
 	public:
 		explicit JSArray() {
-			debug_log("NEW JSARRAY");
 			vector = new std::vector<JSValue>();
 		};
 		JSArray(unsigned int n) { debug_log("NEW JSARRAY2"); };
-		JSArray(const JSArray &rhs) { debug_log("COPY JSARRAY"); };
-		JSArray & operator=(const JSArray&rhs) {
-			debug_log(__FUNCTION__);
+		JSArray(const JSArray &other) {
+			vector = new std::vector<JSValue>(*other.vector);
+		};
+		JSArray & operator=(const JSArray&other) {
+			delete vector;
+			vector = new std::vector<JSValue>(*other.vector);
 			return *this;
 		};
 
 		~JSArray() {
-			debug_log(__FUNCTION__);
 			delete vector;
-			debug_log("finish delete array");
 		}
 
 		unsigned int size() const {
-			debug_log(__FUNCTION__);
-			debug_stream << vector->size() << std::endl;
 			return vector->size();
 		};
 
@@ -223,33 +289,57 @@ namespace Awesomium {
 		};
 		
 		JSValue & At(unsigned int idx) {
-			debug_log(__FUNCTION__);
 			return vector->at(idx);
 		};
 		
 		const JSValue & At(unsigned int idx) const {
-			debug_log(__FUNCTION__);
 			return vector->at(idx);
 		};
 
 		JSValue & operator[](unsigned int idx) {
-			debug_log(__FUNCTION__);
 			return (*vector)[idx];
 		};
 
 		const JSValue & operator[](unsigned int idx) const {
-			debug_log(__FUNCTION__);
 			return (*vector)[idx];
 		}
 
 		void Push(const JSValue&item) {
-			debug_log(__FUNCTION__);
 			vector->push_back(item);
 		};
 		void Pop() { debug_log(__FUNCTION__); };
 		void Insert(const JSValue&item, unsigned int idx) { debug_log(__FUNCTION__); };
 		void Erase(unsigned int idx) { debug_log(__FUNCTION__); };
 		void Clear() { debug_log(__FUNCTION__); };
+
+		static bool ParseJSON(const wchar_t*& str, JSArray& x) {
+
+			if (*str++ != '[')
+				panic("tried to parse an array. IT AINT A FUCKIN ARRAY.");
+
+			x = JSArray();
+
+			for (;;) {
+				if (*str == ']')
+					break;
+
+				JSValue y;
+				if (!JSValue::ParseJSON(str, y)) {
+					debug_log("FAILED TO PARSE ARRAY VALUE!");
+					return false;
+				}
+
+				if (*str == ',') {
+					debug_log("skip comma");
+					str++;
+				}
+
+				x.Push(y);
+			}
+
+			//debug_stream << (char)*str << std::endl;
+			return true;
+		}
 
 	protected:
 		//WebVector<JSValue>* vector_;
@@ -360,8 +450,6 @@ namespace Awesomium {
 		};
 
 		unsigned int remote_id() const {
-			debug_log("remote id");
-			debug_stream << object->getRemoteId() << std::endl;
 			return object->getRemoteId();
 		};
 
@@ -412,21 +500,64 @@ namespace Awesomium {
 	void JSValue_Internal::setObject(const JSObject& val) {
 		reset();
 		type = Object;
-		data_object = new JSObject(val);
+		data.object = new JSObject(val);
+	}
+
+	void JSValue_Internal::setArray(const JSArray& val) {
+		reset();
+		type = Array;
+		data._array = new JSArray(val);
 	}
 
 	////
 
-	// TODO SHITCAN THESE
-	//	VVVVVVVVVVVVV
 
-	JSArray& JSValue::ToArray() {
-		debug_log(__FUNCTION__);
-		return *(new JSArray());
+	bool JSValue::ParseJSON(const wchar_t*& str, JSValue& x) {
+
+		if (*str == '-' || isdigit(*str)) {
+			// THIS IS INCOMPLETE
+			std::vector<char> stringbuilder;
+			stringbuilder.push_back(*str);
+			str++;
+
+			while (isdigit(*str)) {
+				stringbuilder.push_back(*str);
+				str++;
+			}
+
+			stringbuilder.push_back(0);
+
+			x = JSValue(std::stod(stringbuilder.data()));
+		}
+		else {
+			switch (*str) {
+			case '[': {
+				JSArray y;
+				if (!JSArray::ParseJSON(str, y))
+					return false;
+				
+				x = JSValue(y);
+				
+				break;
+			}
+			case '"': {
+				WebString y;
+				if (!WebString::ParseJSON(str, y))
+					return false;
+
+				x = JSValue(y);
+
+				break;
+			}
+			default:
+
+				debug_log("JSON: INVALID CHAR");
+				debug_stream << *str << std::endl;
+				return false;
+			}
+		}
+
+		return true;
 	}
 
-	const JSArray& JSValue::ToArray() const {
-		debug_log(__FUNCTION__);
-		return *(new JSArray());
-	};
 }

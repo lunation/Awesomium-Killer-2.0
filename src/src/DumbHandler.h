@@ -46,7 +46,8 @@ public:
 		CefWindowInfo& windowInfo,
 		CefRefPtr<CefClient>& client,
 		CefBrowserSettings& settings,
-		bool* no_javascript_access) OVERRIDE {
+		bool* no_
+		ript_access) OVERRIDE {
 		
 		cef_log(0, 0, 0, "POPUP!");
 		

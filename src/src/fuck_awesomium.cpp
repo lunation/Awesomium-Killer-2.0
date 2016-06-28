@@ -90,12 +90,6 @@ namespace Awesomium {
 		bool ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) OVERRIDE;
 
 		void GetResponseHeaders(CefRefPtr<CefResponse> res, int64& res_len, CefString& redirectUrl) OVERRIDE {
-			debug_log("head start");
-			//if (source != nullptr)
-			//	filled = source->GetFilledReq(id);
-
-			//if (filled == nullptr) // garry's handers seem to complete immidately, so hopefully this won't be a problem
-			//	panic("Headers not ready. This really needs de-fucked..."); // if it is, we'll need to redesign some shit.
 
 			res_len = response.len;
 			
@@ -107,11 +101,9 @@ namespace Awesomium {
 			res->SetStatus(200);
 			res->SetMimeType(response.mime);
 			index = 0;
-			debug_log("head end");
 		}
 
 		bool ReadResponse(void* data_out, int bytes_to_read, int& bytes_read, CefRefPtr<CefCallback> callback) OVERRIDE {
-			debug_log("read start");
 			int i;
 			for (i = 0; i < bytes_to_read; i++) {
 				((char*)data_out)[i] = response.data[index++];
@@ -119,7 +111,6 @@ namespace Awesomium {
 
 			bytes_read = i;
 
-			debug_log("read end");
 			return true;
 		}
 
@@ -139,7 +130,6 @@ namespace Awesomium {
 	{
 	public:
 		CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& scheme_name, CefRefPtr<CefRequest> request) OVERRIDE {
-			debug_stream << request->GetURL().ToString() << std::endl;
 			return new GarryResourceHandler(browser_map[browser->GetIdentifier()]);
 		}
 	private:
@@ -174,7 +164,7 @@ namespace Awesomium {
 
 			// USERAGENT = Mozilla/5.0 (Windows; Valve Source Client) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1003.1 Safari/535.19 Awesomium/1.7.5.1 GMod/13
 			// PARAMS = --allow-file-access-from-files
-			
+
 			if (instance_ != nullptr)
 				panic("Initialized WebCore twice!");
 
@@ -258,8 +248,12 @@ namespace Awesomium {
 			CefSettings settings;
 			settings.command_line_args_disabled = true;
 			CefString(&settings.browser_subprocess_path).FromASCII("gmod_cef.exe");
-			settings.no_sandbox = true; // define CEF_USE_SANDBOX if you want this?
+			CefString(&settings.user_agent).FromASCII("Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36 GMod/13 (CEF, Valve Source Client)");
+			
+			settings.no_sandbox = true; // define CEF_USE_SANDBOX if you want this? Do we NEED this? Might ben necessary for vista.
 			settings.remote_debugging_port = 8888;
+			settings.windowless_rendering_enabled = true;
+
 
 			//settings.multi_threaded_message_loop = true;
 
@@ -286,35 +280,14 @@ namespace Awesomium {
 
 	bool GarryResourceHandler::ProcessRequest(CefRefPtr<CefRequest> req, CefRefPtr<CefCallback> callback) {
 		
+		debug_stream << "REQ " << req->GetURL().ToString() << std::endl;
+
 		std::wstring url = req->GetURL();
 
 		int host_start = 8;
 		int host_end = url.find_first_of('/', 8);
 
 		CefString host = url.substr(host_start, host_end - host_start);
-
-		/*if (host == "call") { // totoally bypass awesomium's shit
-			filled = new FilledReq(10, (unsigned const char*)"xhfndosled", WebString(L"application/json") );
-
-			int call_split = url.find_first_of('/', host_end+1);
-			
-			int call_id = atoi( CefString(url.substr(host_end+1, call_split - host_end - 1)).ToString().c_str() );
-			CefString call_args = url.substr(call_split+1);
-
-			debug_log("args");
-			JSArray x;
-			x.Push(JSValue(WebString(L"RERR")));
-			debug_log("precall");
-			debug_stream << "CALL THREAD " << GetCurrentThreadId() << std::endl;
-			owner->jshandler->OnMethodCallWithReturnValue(owner, call_id, WebString(L"log"), x);
-			debug_log("postcall");
-
-
-			debug_stream << "please route! " << call_id << " ~ " << call_args.ToString() << " to " << owner << std::endl;
-			//debug_stream << request->GetPostData() << std::endl;
-			callback->Continue();
-			return true;
-		}*/
 
 		CefString path = url.substr(host_end + 1);
 
@@ -326,21 +299,13 @@ namespace Awesomium {
 		if (iter != sources->end()) {
 			DataSource* source = iter->second;
 
-			// Double slashes can and will crash handlers. I AM AN IDIOT IGNORE THIS.
-			/*int pos;
-			while ( (pos = path.find(L"//")) != std::string::npos ) {
-				path = path.replace(pos,2,L"/");
-				debug_log("GOT 1");
-			}*/
-
-			debug_log("FIRE");
 			source->ReqSync(owner, *req, path, &response);
 
 			callback->Continue();
 			return true;
 		}
 		else {
-			debug_log("################################### did not found source");
+			panic("################################### did not found source");
 			return false;
 		}
 	}
@@ -348,36 +313,6 @@ namespace Awesomium {
 
 	///////////////////////////////////////////////
 
-
-	// These seem somehwat unrelated!
-	class DllExport BitmapSurface
-	{
-	public:
-		BitmapSurface(int width, int height) { debug_log("new bitmap surface"); };
-		~BitmapSurface() {};
-
-		const unsigned char*buffer() const { return (unsigned char*)"~~~~"; };
-		int width() const { return 2; };
-		int height() const { return 2; };
-		int row_span() const { return 2; };
-
-		void set_is_dirty(bool is_dirty) { };
-		bool is_dirty() const { return false; };
-
-		void CopyTo(unsigned char* dst, int dst_row, int dst_depth, bool convert, bool flipy) const {};
-		bool SaveToPNG(const Awesomium::WebString* file_path, bool preserve_transparency = false) { return false; };
-		bool SaveToJPEG(const Awesomium::WebString* file_path, int quality = 90) { return false; };
-		unsigned char GetAlphaAtPoint(int x, int y) const { return 255; };
-		void Paint(unsigned char *src, int src_row_span, const void*& src_rect, const void*& dst_rect) {};
-		void Scroll(int dx, int dy, const void*& clip_rect);
-
-	private:
-		unsigned char* buffer_;
-		int width_;
-		int height_;
-		int row_span_;
-		bool is_dirty_;
-	};
 
 	void DllExport CopyBuffers(int w, int h, unsigned char* src, int r, unsigned char* dst,
 		int dr, int dd, bool rgba, bool flip_y) { debug_log("COPY NEM BUFFERS"); };

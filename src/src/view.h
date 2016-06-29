@@ -193,7 +193,7 @@ namespace Awesomium
 	class DllExport Surface
 	{
 	public:
-		virtual ~Surface() { debug_log(__FUNCTION__); };
+		virtual ~Surface() { };
 		virtual void Paint(unsigned  char*shit, int span, void*&srcrect, void*&destrect) { debug_log(__FUNCTION__); memset(shit, 1, span); };
 		virtual void Scroll(unsigned  char*shit, int span, void*&srcrect, void*&destrect) { debug_log(__FUNCTION__); memset(shit, 1, span); };
 
@@ -341,6 +341,7 @@ namespace Awesomium
 		virtual bool IsLoading() { return browser->IsLoading(); };
 		virtual bool IsCrashed() { return false; }; // ASSUME NOT CRASHED
 		virtual void Resize(int width, int height) {
+			debug_log("RESIZE");
 
 			if (_surface)
 				delete _surface;
@@ -348,14 +349,24 @@ namespace Awesomium
 			_width = width;
 			_height = height;
 
+			debug_log("PRE");
 			browser->GetHost()->WasResized();
+			debug_log("EXIT RESIZE");
 		};
 		virtual void SetTransparent(bool is_transparent) { debug_log(__FUNCTION__); };
 		virtual bool IsTransparent() { debug_log(__FUNCTION__); return false; };
 		virtual void PauseRendering() { debug_log(__FUNCTION__); };
 		virtual void ResumeRendering() { debug_log(__FUNCTION__); };
-		virtual void Focus() { debug_log(__FUNCTION__); };
-		virtual void Unfocus() { debug_log(__FUNCTION__); };
+		virtual void Focus() {
+			//debug_log(__FUNCTION__);
+			//browser->GetHost()->SendFocusEvent(true);
+			//browser->GetHost()->SetFocus(true);
+		};
+		virtual void Unfocus() {
+			//debug_log(__FUNCTION__);
+			//browser->GetHost()->SendFocusEvent(false);
+			//browser->GetHost()->SetFocus(false);
+		};
 		virtual int focused_element_type() { debug_log(__FUNCTION__); return 1; };
 		virtual void ZoomIn() { debug_log(__FUNCTION__); };
 		virtual void ZoomOut() { debug_log(__FUNCTION__); };
@@ -363,15 +374,21 @@ namespace Awesomium
 		virtual void ResetZoom() { debug_log(__FUNCTION__); };
 		virtual int GetZoom() { debug_log(__FUNCTION__);  return 1; };
 		virtual void InjectMouseMove(int x, int y) {
+			debug_log(__FUNCTION__);
 			mouse.x = x;
 			mouse.y = y;
 			browser->GetHost()->SendMouseMoveEvent(mouse, false);
+			debug_log(__FUNCTION__ " Done");
 		};
 		virtual void InjectMouseDown(int button) {
+			debug_log(__FUNCTION__);
 			browser->GetHost()->SendMouseClickEvent(mouse, cef_mouse_button_type_t::MBT_LEFT, false, 1);
+			debug_log(__FUNCTION__ " Done");
 		};
 		virtual void InjectMouseUp(int button) {
+			debug_log(__FUNCTION__);
 			browser->GetHost()->SendMouseClickEvent(mouse, cef_mouse_button_type_t::MBT_LEFT, true, 0);
+			debug_log(__FUNCTION__ " Done");
 		};
 		virtual void InjectMouseWheel(int scroll_vert, int scroll_horz) { debug_log(__FUNCTION__); };
 		virtual void InjectKeyboardEvent(const WebKeyboardEvent& key_event) {
@@ -453,15 +470,9 @@ namespace Awesomium
 			
 			CefWindowInfo window_info;
 
-			/*#if defined(OS_WIN)
-				// On Windows we need to specify certain flags that will be passed to
-				// CreateWindowEx().
-				window_info.SetAsPopup(NULL, "Ain't gonna happen, huh?");
-			#endif*/
-
 			window_info.SetAsWindowless(0, true);
 
-			CefRefPtr<CefClient> client(session->client); // TODO REPLACE WITH CLIENT FROM SESSION!
+			CefRefPtr<CefClient> client(session->client);
 
 			std::string url; // -DISREGARD FOR NOW: if we don't have some url to navigate to, we'll end up in a deadlock when javascript IPCs run
 
@@ -471,8 +482,7 @@ namespace Awesomium
 
 			globals = JSObject(this, getNextGlobalID());
 
-			browser_map[browser->GetIdentifier()] = this; // remove?
-			debug_log("ADDED TO MAP!");
+			browser_map[browser->GetIdentifier()] = this;
 		}
 		~WebView() { debug_log(__FUNCTION__); }
 
@@ -571,12 +581,13 @@ namespace Awesomium
 			panic("parse args: CRITICAL FAILURE!");
 		}
 		else {
-			js_call_lock.lock();
-
+			//debug_log("JS - Pre Lock");
+			//js_call_lock.lock();
+			//debug_log("JS - Post Lock");
 			JSValue result = req_view->jshandler->OnMethodCallWithReturnValue(req_view, call_id, call_name, x.ToArray());
-
-			js_call_lock.unlock();
-
+			//debug_log("JS - Pre Unlock");
+			//js_call_lock.unlock();
+			//debug_log("JS - Post Unlock");
 			json_result = result.ToJSON();
 		}
 
@@ -603,9 +614,9 @@ namespace Awesomium
 	bool GarryClient::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) {
 		debug_log(__FUNCTION__);
 		auto ptr = browser_map[browser->GetIdentifier()];
-
+		debug_log(__FUNCTION__" x");
 		rect.Set(0, 0, ptr->_width, ptr->_height);
-
+		debug_log( (__FUNCTION__" y "+std::to_string(ptr->_width)+" "+std::to_string(ptr->_height)).c_str() );
 		return true;
 	}
 
@@ -617,7 +628,7 @@ namespace Awesomium
 		
 		//auto x = std::chrono::high_resolution_clock::now();
 
-		//debug_stream << "now = " << x.time_since_epoch().count() << std::endl;
+		debug_stream << "paint" << std::endl;
 
 		
 		auto surface = static_cast<BitmapSurface*>(browser_map[browser->GetIdentifier()]->surface());

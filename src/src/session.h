@@ -10,6 +10,7 @@ namespace Awesomium {
 		virtual const WebPreferences& preferences() const { debug_log(__FUNCTION__); return *(new WebPreferences()); }; // VERY NOT GOOD!!! <======================================
 		virtual void AddDataSource(const WebString& asset_host, DataSource* source) {
 			data_sources[asset_host.data()] = source;
+			source->set_session(this, 0);
 		};
 		virtual void SetCookie(const WebURL& url, const WebString& cookie_string, bool is_http_only, bool force_session_cookie) { debug_log(__FUNCTION__); };
 		virtual void ClearCookies() { debug_log(__FUNCTION__); };
@@ -26,11 +27,3 @@ namespace Awesomium {
 	};
 
 }
-
-/*class GarrySchemeHandlerFactory : public CefSchemeHandlerFactory
-{
-public:
-	CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& scheme_name, CefRefPtr<CefRequest> request) OVERRIDE {
-
-	}
-};*/

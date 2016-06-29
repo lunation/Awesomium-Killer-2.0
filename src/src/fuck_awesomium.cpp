@@ -11,6 +11,9 @@
 #include <Windows.h>
 
 #define OS_WIN
+#include "include/base/cef_bind.h"
+#include "include/wrapper/cef_closure_task.h"
+
 #include "include/cef_base.h"
 #include "include/cef_app.h"
 #include "include/cef_browser.h"
@@ -35,7 +38,7 @@ void panic(const char* msg) {
 	exit(1);
 }
 
-std::mutex js_call_lock;
+//std::mutex js_call_lock;
 
 #include "enums.h"
 
@@ -51,6 +54,8 @@ std::mutex js_call_lock;
 #include "session.h"
 
 #include "view.h"
+
+#include "app.h"
 
 namespace Awesomium {
 
@@ -87,7 +92,12 @@ namespace Awesomium {
 			this->owner = owner;
 		}
 
-		bool ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) OVERRIDE;
+		void FillRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback);
+
+		bool ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) OVERRIDE {
+			CefPostTask(TID_UI, base::Bind(&GarryResourceHandler::FillRequest, this, request, callback));
+			return true;
+		}
 
 		void GetResponseHeaders(CefRefPtr<CefResponse> res, int64& res_len, CefString& redirectUrl) OVERRIDE {
 
@@ -170,7 +180,7 @@ namespace Awesomium {
 
 			instance_ = new WebCore();
 
-			js_call_lock.lock();
+			//js_call_lock.lock();
 
 			return instance_;
 		};
@@ -221,9 +231,13 @@ namespace Awesomium {
 		};
 
 		virtual void Update() {
-			js_call_lock.unlock();
+			//debug_log("Update - Pre Unlock");
+			//js_call_lock.unlock();
+			//debug_log("Update - Post Unlock");
 			CefDoMessageLoopWork();
-			js_call_lock.lock();
+			//debug_log("Update - Pre Lock");
+			//js_call_lock.lock();
+			//debug_log("Update - Post Lock");
 		};
 
 		virtual void Log(const WebString& message, int severity, const WebString& file, int line) {
@@ -259,7 +273,7 @@ namespace Awesomium {
 
 			//CefRefPtr<DumbApp> app_ref(new DumbApp);
 
-			if (!CefInitialize(args, settings, nullptr, nullptr))
+			if (!CefInitialize(args, settings, new GarryApp(), nullptr))
 				panic("CEF Setup Failed!");
 
 			CefRefPtr<GarrySchemeHandlerFactory> garryFactory = new GarrySchemeHandlerFactory();
@@ -278,9 +292,8 @@ namespace Awesomium {
 
 	///////////////////////////////////////////////
 
-	bool GarryResourceHandler::ProcessRequest(CefRefPtr<CefRequest> req, CefRefPtr<CefCallback> callback) {
-		
-		debug_stream << "REQ " << req->GetURL().ToString() << std::endl;
+	void GarryResourceHandler::FillRequest(CefRefPtr<CefRequest> req, CefRefPtr<CefCallback> callback) {
+		debug_stream << "HANDLE REQ " << req->GetURL().ToString() << std::endl;
 
 		std::wstring url = req->GetURL();
 
@@ -294,7 +307,6 @@ namespace Awesomium {
 		auto sources = &(WebCore::instance()->session->data_sources);
 
 		auto iter = sources->find(host);
-
 		
 		if (iter != sources->end()) {
 			DataSource* source = iter->second;
@@ -302,11 +314,10 @@ namespace Awesomium {
 			source->ReqSync(owner, *req, path, &response);
 
 			callback->Continue();
-			return true;
 		}
 		else {
-			panic("################################### did not found source");
-			return false;
+			//panic("################################### did not find source");
+			callback->Cancel();
 		}
 	}
 

@@ -99,7 +99,8 @@ namespace Awesomium {
 
 			if (id != data_source_id)
 				panic("Our datasources are still fucked god damn it.");
-
+			debug_log("response");
+			debug_log(std::to_string(len).c_str());
 			response->set(len, data, mime);
 			ready = true;
 		};
@@ -109,19 +110,27 @@ namespace Awesomium {
 
 			ResourceRequest awesome_req;
 			WebString webstr_path(path.c_str());
+			//awesome_req.set_method(WebString(L"GET"));
+			//awesome_req.AppendExtraHeader
 
 			req_view = view;
 			ready = false;
 			response = res;
 
+			debug_log("fetch");
+			debug_log(CefString(path).ToString().c_str());
 			OnRequest(data_source_id, awesome_req, webstr_path);
 
-			while (!ready);
+			if (!ready) panic("meme");
 		}
 
 	protected:
 		DataSource() { };
-		void set_session(WebSession*session, int data_source_id) { debug_log(__FUNCTION__); };
+	public:
+		void set_session(WebSession*session, int data_source_id) {
+			session_ = session;
+		};
+	protected:
 		WebSession*session_;
 		int data_source_id = 0; 
 		friend class WebSessionImpl;

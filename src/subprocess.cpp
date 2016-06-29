@@ -4,6 +4,7 @@
 #define OS_WIN
 #include "include/cef_app.h"
 
+#include "src/app.h"
 #include "src/js_interface.h"
 
 #include <unordered_map>
@@ -30,31 +31,12 @@ struct BrowserData {
 
 std::unordered_map<int, BrowserData> browser_table;
 
-class SubApp : public CefApp, public CefRenderProcessHandler {
+class SubApp : public GarryApp, public CefRenderProcessHandler {
 public:
 	virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() OVERRIDE {
 		return this;
 	}
 
-private:
-	//std::unordered_map<int, CefV8Value*> ids_to_objects;
-
-	//std::unordered_map<CefV8Value* , int> objects_to_ids;
-
-	/*int next_id = 2;
-
-	int getObjectId(CefV8Value* value) {
-		auto ud = value->GetUserData();
-
-		if (ud == nullptr) {
-			ud = new JsObjId(next_id++);
-			value->SetUserData(ud);
-		}
-
-		return static_cast<JsObjId*>(ud.get())->id;
-	}*/
-
-public:
 	virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message) OVERRIDE {
 		auto args = message->GetArgumentList();
 
@@ -181,9 +163,17 @@ public:
 			}
 			
 			if (data[i]->parent_id == -1) {
-				global->SetValue(data[i]->key,  new_value, cef_v8_propertyattribute_t::V8_PROPERTY_ATTRIBUTE_NONE ); // not sure about this property thing, check back later!
+				auto current = global->GetValue(data[i]->key);
+				
+				if (new_value->IsObject() && current->IsObject()) {
+					new_value = current;
+				}
+				else
+					global->SetValue(data[i]->key,  new_value, cef_v8_propertyattribute_t::V8_PROPERTY_ATTRIBUTE_NONE ); // not sure about this property thing, check back later!
 			}
 			else {
+				auto current = global_build_array[data[i]->parent_id]->GetValue(data[i]->key);
+
 				global_build_array[data[i]->parent_id]->SetValue(data[i]->key, new_value, cef_v8_propertyattribute_t::V8_PROPERTY_ATTRIBUTE_NONE); // not sure about this property thing, check back later!
 			}
 

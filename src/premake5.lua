@@ -30,12 +30,9 @@ solution "FuckAwesomium"
 	--libdirs { "cef/Debug" }
 
 	-- NOTE: The location of the wrapper lib changes a lot between CEF versions!
-	libdirs { "cef/Debug", "cef/libcef_dll/Debug" }
-	--links { "libcef", "cef_sandbox" }
 	links { "libcef", "libcef_dll_wrapper" }
 
-	-- A project defines one build target
-
+	targetdir "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/bin/"
 	
 
 	project "AwesomiumReplacement"
@@ -44,14 +41,16 @@ solution "FuckAwesomium"
 		files { "src/**.h", "src/**.cpp" }
 		
 		configuration "Release"
+			buildoptions { "/MT" }
 			--defines { "NDEBUG", "_GENERIC" }
 			--targetdir "../dieawesomium/bin"
+			libdirs { "cef/Release", "cef/libcef_dll/Release" }
 
 		configuration "Debug"
 			buildoptions { "/MTd" }
 			--defines { "DEBUG", "_GENERIC" }
 			--flags { "Symbols", "EnableSSE2" }
-			targetdir "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/bin/"
+			libdirs { "cef/Debug", "cef/libcef_dll/Debug" }
 	
 	project "SubProcess"
 		targetname "gmod_cef"
@@ -60,11 +59,13 @@ solution "FuckAwesomium"
 		files { "subprocess.cpp" }
 
 		configuration "Release"
+			buildoptions { "/MT" }
 			--defines { "NDEBUG", "_GENERIC" }
 			--targetdir "../dieawesomium/bin"
+			libdirs { "cef/Release", "cef/libcef_dll/Release" }
 
 		configuration "Debug"
 			buildoptions { "/MTd" }
 			--defines { "DEBUG", "_GENERIC" }
 			--flags { "Symbols", "EnableSSE2" }
-			targetdir "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/bin/"
+			libdirs { "cef/Debug", "cef/libcef_dll/Debug" }

@@ -1,6 +1,8 @@
 # Awesomium-Killer-2.0
 [![forthebadge](http://forthebadge.com/images/badges/fuck-it-ship-it.svg)](http://forthebadge.com)
+
 [![forthebadge](http://forthebadge.com/images/badges/just-plain-nasty.svg)](http://forthebadge.com)
+
 [![forthebadge](http://forthebadge.com/images/badges/pretty-risque.svg)](http://forthebadge.com)
 
 Awesomium replacement that uses CEF internally.

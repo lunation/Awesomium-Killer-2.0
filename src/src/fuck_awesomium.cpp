@@ -109,6 +109,9 @@ namespace Awesomium {
 			}
 
 			res->SetStatus(200);
+			std::multimap <CefString,CefString> headers;
+			headers.insert(std::pair<CefString, CefString>("Access-Control-Allow-Origin","*"));
+			res->SetHeaderMap(headers);
 			res->SetMimeType(response.mime);
 			index = 0;
 		}
@@ -278,6 +281,7 @@ namespace Awesomium {
 
 			CefRefPtr<GarrySchemeHandlerFactory> garryFactory = new GarrySchemeHandlerFactory();
 			CefRegisterSchemeHandlerFactory("asset", "", garryFactory);
+			CefRegisterSchemeHandlerFactory("call", "", garryFactory);
 
 			//makeThatWindow();
 		};
@@ -297,27 +301,38 @@ namespace Awesomium {
 
 		std::wstring url = req->GetURL();
 
-		int host_start = 8;
-		int host_end = url.find_first_of('/', 8);
+
+		int host_start = url.find(L"://") + 3;
+		int host_end = url.find_first_of('/', host_start);
 
 		CefString host = url.substr(host_start, host_end - host_start);
 
 		CefString path = url.substr(host_end + 1);
 
-		auto sources = &(WebCore::instance()->session->data_sources);
+		debug_stream << "~ " << CefString(url.substr(0, 4)).ToString() << " " << host.ToString() << " " << path.ToString() << std::endl;
 
-		auto iter = sources->find(host);
-		
-		if (iter != sources->end()) {
-			DataSource* source = iter->second;
-
-			source->ReqSync(owner, *req, path, &response);
+		if (url.substr(0, 4) == L"call") {
+			owner->call_source->ReqSync(owner, *req, path, &response);
 
 			callback->Continue();
 		}
 		else {
-			//panic("################################### did not find source");
-			callback->Cancel();
+
+			auto sources = &(WebCore::instance()->session->data_sources);
+
+			auto iter = sources->find(host);
+
+			if (iter != sources->end()) {
+				DataSource* source = iter->second;
+
+				source->ReqSync(owner, *req, path, &response);
+
+				callback->Continue();
+			}
+			else {
+				//panic("################################### did not find source");
+				callback->Cancel();
+			}
 		}
 	}
 

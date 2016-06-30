@@ -1,7 +1,19 @@
-#die_awesomium
-A dummy dll which replaces awesomium
+# Awesomium-Killer-2.0
+[![forthebadge](http://forthebadge.com/images/badges/fuck-it-ship-it.svg)](http://forthebadge.com)
+[![forthebadge](http://forthebadge.com/images/badges/just-plain-nasty.svg)](http://forthebadge.com)
+[![forthebadge](http://forthebadge.com/images/badges/pretty-risque.svg)](http://forthebadge.com)
 
-#Installing
+Awesomium replacement that uses CEF internally.
+
+CEF BUILD **2704.1431**
+
+USING OPENGL LIBS FROM **2526.1373**
+
+#Credits
+Killing/Replacing Awesomium - Leystryku, Parakeet
+CEF - Marshall A. Greenblatt, Google
+
+#Installing (OLD)
 Put everything from the dieawesomium folder into C:\Program Files (x86)\Steam\steamapps\common\GarrysMod or if not on x64 C:\Program Files\Steam\steamapps\common\GarrysMod, or wherever you installed gmod.
 Do the same with everything from the Textures folder.
 If you want to, then you can also do it with dieawesomium_mcorerender for some more speed.
@@ -21,11 +33,5 @@ http://i.imgur.com/C3O2Yjp.jpg
 install + showcase ( crash@options is from playing around with sprays aka - not related to this ):
 https://www.copy.com/s/t%3Ax7IN31vbQiIs%3Bp%3A%252F2015-09-20_02-39-15.mp4%3Boid%3A165
 
-Credits:
-Killing/Replacing Awesomium - Leystryku
-New Lua Menu based on gmod 10 menu  ( mainly port of gmod 10 menu ) - Leystryku
-gmod 10 menu - team garry
-Loadingscreen - Freezebug
-
-#Compiling
+#Compiling (OLD)
 If you wish to compile this yourself, head to the src/ directory, open premake5.lua in your favourite text editor, edit the `sdk_dir` variable to point to the 'src' directory of Valve's Source SDK. Save the file and run `premake5 <target>` within that directory; a `projects` folder will then be created. The only supported platform right now is Windows. Feel free to contribute!

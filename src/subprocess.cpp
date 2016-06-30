@@ -124,10 +124,8 @@ public:
 		bool success = context->Eval(R"(
 			(function(id,name) {
 				return function() {
-					if (window.location.protocol != "asset:")
-						return;
 					var request = new XMLHttpRequest();
-					request.open("POST", "asset://call/"+id+"/"+name+"/"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
+					request.open("POST", "call://_/"+id+"/"+name+"?"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
 					request.send();
 					if (request.status==200) {
 						return JSON.parse(request.responseText);

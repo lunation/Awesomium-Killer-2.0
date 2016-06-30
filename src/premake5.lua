@@ -44,13 +44,13 @@ solution "FuckAwesomium"
 			buildoptions { "/MT" }
 			--defines { "NDEBUG", "_GENERIC" }
 			--targetdir "../dieawesomium/bin"
-			libdirs { "cef/Release", "cef/libcef_dll/Release" }
+			libdirs { "cef/Release", "cef/libcef_dll_wrapper/Release" }
 
 		configuration "Debug"
-			buildoptions { "/MTd" }
+			buildoptions { "/MT" }
 			--defines { "DEBUG", "_GENERIC" }
 			--flags { "Symbols", "EnableSSE2" }
-			libdirs { "cef/Debug", "cef/libcef_dll/Debug" }
+			libdirs { "cef/Release", "cef/libcef_dll_wrapper/Release" }
 	
 	project "SubProcess"
 		targetname "gmod_cef"
@@ -62,10 +62,10 @@ solution "FuckAwesomium"
 			buildoptions { "/MT" }
 			--defines { "NDEBUG", "_GENERIC" }
 			--targetdir "../dieawesomium/bin"
-			libdirs { "cef/Release", "cef/libcef_dll/Release" }
+			libdirs { "cef/Release", "cef/libcef_dll_wrapper/Release" }
 
 		configuration "Debug"
-			buildoptions { "/MTd" }
+			buildoptions { "/MT" }
 			--defines { "DEBUG", "_GENERIC" }
 			--flags { "Symbols", "EnableSSE2" }
-			libdirs { "cef/Debug", "cef/libcef_dll/Debug" }
+			libdirs { "cef/Release", "cef/libcef_dll_wrapper/Release" }

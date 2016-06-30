@@ -113,7 +113,7 @@ namespace Awesomium {
 			//awesome_req.set_method(WebString(L"GET"));
 			//awesome_req.AppendExtraHeader
 
-			req_view = view;
+			//req_view = view;
 			ready = false;
 			response = res;
 
@@ -136,7 +136,7 @@ namespace Awesomium {
 		friend class WebSessionImpl;
 
 	protected:
-		static WebView* req_view;
+		//static WebView* req_view;
 
 	private:
 		// Hopefully there's never more than one IO thread lol.
@@ -147,7 +147,7 @@ namespace Awesomium {
 		//static std::unordered_map<DataSource*, std::unordered_map<int, FilledReq*>> filled_requests;
 	};
 
-	WebView* DataSource::req_view = nullptr;
+	//WebView* DataSource::req_view = nullptr;
 
 	bool DataSource::ready = false;
 	SimpleResponse* DataSource::response = nullptr;

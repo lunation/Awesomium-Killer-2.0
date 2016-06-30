@@ -165,12 +165,34 @@ namespace Awesomium
 	};
 
 	class JsCallDataSource : public DataSource {
+	public:
+		JsCallDataSource(WebView* view) {
+			this->view = view;
+		}
 		void OnRequest(int id, const ResourceRequest& request, const WebString& path) OVERRIDE;
+	private:
+		// Decodes percent encoded string. Seems to be safe.
+		static std::wstring decode_url_part(const std::wstring& str) {
+			std::vector<wchar_t> string_builder;
+			for ( int i = 0; i < str.length(); i++ ) {
+				wchar_t c = str[i];
+				if (c == '%') {
+					if (i == str.length()-1)
+						break;
+					c = std::stoul(str.substr(i+1, 2),0,16);
+					i += 2;
+				}
+
+				string_builder.push_back(c);
+			}
+			return std::wstring(string_builder.data(),string_builder.size());
+		}
+		WebView* view;
 	};
 
 	WebSession::WebSession() {
 		client = new GarryClient();
-		AddDataSource(WebString(L"call"), new JsCallDataSource());
+		//AddDataSource(WebString(L"call"), new JsCallDataSource());
 	}
 
 	namespace WebViewListener
@@ -341,7 +363,6 @@ namespace Awesomium
 		virtual bool IsLoading() { return browser->IsLoading(); };
 		virtual bool IsCrashed() { return false; }; // ASSUME NOT CRASHED
 		virtual void Resize(int width, int height) {
-			debug_log("RESIZE");
 
 			if (_surface)
 				delete _surface;
@@ -349,9 +370,7 @@ namespace Awesomium
 			_width = width;
 			_height = height;
 
-			debug_log("PRE");
 			browser->GetHost()->WasResized();
-			debug_log("EXIT RESIZE");
 		};
 		virtual void SetTransparent(bool is_transparent) { debug_log(__FUNCTION__); };
 		virtual bool IsTransparent() { debug_log(__FUNCTION__); return false; };
@@ -359,12 +378,12 @@ namespace Awesomium
 		virtual void ResumeRendering() { debug_log(__FUNCTION__); };
 		virtual void Focus() {
 			//debug_log(__FUNCTION__);
-			//browser->GetHost()->SendFocusEvent(true);
+			browser->GetHost()->SendFocusEvent(true);
 			//browser->GetHost()->SetFocus(true);
 		};
 		virtual void Unfocus() {
 			//debug_log(__FUNCTION__);
-			//browser->GetHost()->SendFocusEvent(false);
+			browser->GetHost()->SendFocusEvent(false);
 			//browser->GetHost()->SetFocus(false);
 		};
 		virtual int focused_element_type() { debug_log(__FUNCTION__); return 1; };
@@ -374,39 +393,41 @@ namespace Awesomium
 		virtual void ResetZoom() { debug_log(__FUNCTION__); };
 		virtual int GetZoom() { debug_log(__FUNCTION__);  return 1; };
 		virtual void InjectMouseMove(int x, int y) {
-			debug_log(__FUNCTION__);
 			mouse.x = x;
 			mouse.y = y;
 			browser->GetHost()->SendMouseMoveEvent(mouse, false);
-			debug_log(__FUNCTION__ " Done");
 		};
 		virtual void InjectMouseDown(int button) {
-			debug_log(__FUNCTION__);
-			browser->GetHost()->SendMouseClickEvent(mouse, cef_mouse_button_type_t::MBT_LEFT, false, 1);
-			debug_log(__FUNCTION__ " Done");
+			browser->GetHost()->SendMouseClickEvent(mouse, static_cast<cef_mouse_button_type_t>(button), false, 1);
 		};
 		virtual void InjectMouseUp(int button) {
-			debug_log(__FUNCTION__);
-			browser->GetHost()->SendMouseClickEvent(mouse, cef_mouse_button_type_t::MBT_LEFT, true, 0);
-			debug_log(__FUNCTION__ " Done");
+			browser->GetHost()->SendMouseClickEvent(mouse, static_cast<cef_mouse_button_type_t>(button), true, 0);
 		};
-		virtual void InjectMouseWheel(int scroll_vert, int scroll_horz) { debug_log(__FUNCTION__); };
+		virtual void InjectMouseWheel(int scroll_vert, int scroll_horz) {
+			browser->GetHost()->SendMouseWheelEvent(mouse, scroll_horz, scroll_vert);
+		};
 		virtual void InjectKeyboardEvent(const WebKeyboardEvent& key_event) {
-			debug_log(__FUNCTION__);
-			debug_stream << key_event.type << " " << key_event.virtual_key_code << std::endl;
+
 			if (key_event.virtual_key_code == 122) {
 				CefWindowInfo wininf;
-				wininf.SetAsPopup(0, "rerr");
+				wininf.SetAsPopup(0, "Gmod CEF Dev Tools");
 
-				CefBrowserSettings asdf;
+				CefBrowserSettings settings;
 
 				CefPoint p;
-				browser->GetHost()->ShowDevTools(wininf, browser->GetHost()->GetClient() , asdf, p);
+				browser->GetHost()->ShowDevTools(wininf, browser->GetHost()->GetClient() , settings, p);
 			}
 			else {
 				CefKeyEvent key;
+				key.character = key_event.Char;
+				//key.focus_on_editable_field = ?
+				key.is_system_key = key_event.is_system_key;
+				key.modifiers = key_event.modifiers;
+				key.native_key_code = key_event.native_key_code;
+				key.type = static_cast<cef_key_event_type_t>( key_event.type + 1);
+				key.unmodified_character = key_event.unmodified_text[0]; // ???
 				key.windows_key_code = key_event.virtual_key_code;
-				key.type = static_cast<cef_key_event_type_t>( key_event.type );
+
 				browser->GetHost()->SendKeyEvent(key);
 			}
 		};
@@ -480,6 +501,8 @@ namespace Awesomium
 
 			browser = CefBrowserHost::CreateBrowserSync(window_info, client, url, browser_settings, NULL);
 
+			call_source = new JsCallDataSource(this);
+
 			globals = JSObject(this, getNextGlobalID());
 
 			browser_map[browser->GetIdentifier()] = this;
@@ -504,6 +527,8 @@ namespace Awesomium
 
 		int _width;
 		int _height;
+
+		JsCallDataSource* call_source;
 	private:
 		WebSession* session_;
 		CefRefPtr<CefBrowser> browser;
@@ -563,28 +588,49 @@ namespace Awesomium
 
 	void JsCallDataSource::OnRequest(int id, const ResourceRequest& request, const WebString& path) {
 
+		debug_log("enter");
+
+		if (path.data() == 0) {
+			SendResponse(id, 0, (unsigned const char*)0, WebString(L"application/json"));
+			return;
+		}
+
 		std::wstring std_path = std::wstring(path.data());
 
 		int id_end = std_path.find_first_of('/');
-		int name_end = std_path.find_first_of('/', id_end+1);
+		int name_end = std_path.find_first_of('?', id_end+1);
+
+		debug_stream << "~~~" << id_end << " " << name_end << std::endl;
+
+		if (id_end == 0 || name_end==0) {
+			SendResponse(id, 0, (unsigned const char*)0, WebString(L"application/json"));
+			return;
+		}
 
 		int call_id = atoi( CefString( std_path.substr(0,id_end).c_str() ).ToString().c_str() );
-		WebString call_name = WebString(std_path.substr(id_end+1, name_end-id_end-1).c_str());
-		WebString call_arg_json = WebString(std_path.substr(name_end+1).c_str());
+		WebString call_name = WebString( decode_url_part( std_path.substr(id_end+1, name_end-id_end-1) ).c_str() );
+		WebString call_arg_json = WebString( decode_url_part( std_path.substr(name_end+1) ).c_str() );
+
+		debug_stream << "JS THIS SHIT " << call_id << " " << call_name << " " << call_arg_json << " " << std::endl;
 
 		const wchar_t* json_ptr = call_arg_json.data();
+
+		if (json_ptr == 0) {
+			SendResponse(id, 0, (unsigned const char*)0, WebString(L"application/json"));
+			return;
+		}
 
 		JSValue x;
 		std::string json_result;
 
 		if (!JSValue::ParseJSON(json_ptr, x) || !x.IsArray()) {
-			panic("parse args: CRITICAL FAILURE!");
+			debug_log("parse args: CRITICAL FAILURE!");
 		}
 		else {
 			//debug_log("JS - Pre Lock");
 			//js_call_lock.lock();
 			//debug_log("JS - Post Lock");
-			JSValue result = req_view->jshandler->OnMethodCallWithReturnValue(req_view, call_id, call_name, x.ToArray());
+			JSValue result = view->jshandler->OnMethodCallWithReturnValue(view, call_id, call_name, x.ToArray());
 			//debug_log("JS - Pre Unlock");
 			//js_call_lock.unlock();
 			//debug_log("JS - Post Unlock");
@@ -600,23 +646,30 @@ namespace Awesomium
 	bool GarryClient::GetScreenInfo(CefRefPtr<CefBrowser> browser, CefScreenInfo& screen_info) {
 		debug_log(__FUNCTION__);
 
-		screen_info.depth = 32;
-		screen_info.depth_per_component = 8;
+		//screen_info.depth = 32;
+		//screen_info.depth_per_component = 8;
 		
-		/*debug_log(__FUNCTION__);
+		//CefRect view_rect;
+		//GetViewRect(browser, view_rect);
+
+		//screen_info.rect = view_rect;
+		//screen_info.available_rect = view_rect;
+
+		//debug_log(__FUNCTION__);
 		auto ptr = browser_map[browser->GetIdentifier()];
 
 		CefRect screen_rect(0,0, ptr->_width, ptr->_height);
-		screen_info.Set(1, 32, 8, false, screen_rect, screen_rect);*/
-		return true;
+		screen_info.Set(1, 32, 8, false, screen_rect, screen_rect);
+
+		return false;
 	}
 
 	bool GarryClient::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) {
-		debug_log(__FUNCTION__);
+		//debug_log(__FUNCTION__);
 		auto ptr = browser_map[browser->GetIdentifier()];
-		debug_log(__FUNCTION__" x");
+		//debug_log(__FUNCTION__" x");
 		rect.Set(0, 0, ptr->_width, ptr->_height);
-		debug_log( (__FUNCTION__" y "+std::to_string(ptr->_width)+" "+std::to_string(ptr->_height)).c_str() );
+		//cef_log(0,0,0, (__FUNCTION__" y "+std::to_string(ptr->_width)+" "+std::to_string(ptr->_height)).c_str() );
 		return true;
 	}
 

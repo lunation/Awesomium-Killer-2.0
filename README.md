@@ -9,6 +9,7 @@ Awesomium replacement that uses CEF internally.
 
 ##Credits
 Killing/Replacing Awesomium - Leystryku, Parakeet
+
 CEF - Marshall A. Greenblatt, Google
 
 ##Installing

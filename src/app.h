@@ -1,7 +1,9 @@
 class GarryApp : public CefApp {
 public:
     void OnBeforeCommandLineProcessing(const CefString& process_type, CefRefPtr<CefCommandLine> command_line) OVERRIDE {
-		command_line->AppendSwitch("enable-logging");
+		#ifdef TESTING
+			command_line->AppendSwitch("enable-logging");
+		#endif
 
 		command_line->AppendSwitch("allow-file-access-from-files");
 

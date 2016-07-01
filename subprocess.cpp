@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#define OS_WIN
 #include "include/cef_app.h"
 
 #include "src/app.h"
@@ -124,6 +123,8 @@ public:
 		bool success = context->Eval(R"(
 			(function(id,name) {
 				return function() {
+					if (location.protocol == "https:")
+						return;
 					var request = new XMLHttpRequest();
 					request.open("POST", "call://_/"+id+"/"+name+"?"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
 					request.send();

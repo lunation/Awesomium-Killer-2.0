@@ -10,7 +10,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-#define OS_WIN
 #include "include/base/cef_bind.h"
 #include "include/wrapper/cef_closure_task.h"
 
@@ -21,12 +20,14 @@
 
 // Debug shit
 void debug_log(const char* msg) {
-	cef_log(0, 0, 0, msg);
+	#ifdef TESTING
+		cef_log(0, 0, 0, msg);
+	#endif
 }
 
 void panic(const char* msg) {
-	debug_log("PANIC!!!");
-	debug_log(msg);
+	cef_log(0, 0, 0, "PANIC");
+	cef_log(0, 0, 0, msg);
 	exit(1);
 }
 
@@ -259,8 +260,10 @@ namespace Awesomium {
 			CefString(&settings.browser_subprocess_path).FromASCII("gmod_cef.exe");
 			CefString(&settings.user_agent).FromASCII("Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36 GMod/13 (CEF, Valve Source Client)");
 			
-			settings.no_sandbox = true; // define CEF_USE_SANDBOX if you want this? Do we NEED this? Might ben necessary for vista.
-			settings.remote_debugging_port = 8888;
+			settings.no_sandbox = true; // we dont need this
+			#ifdef TESTING
+				settings.remote_debugging_port = 8888;
+			#endif
 			settings.windowless_rendering_enabled = true;
 
 

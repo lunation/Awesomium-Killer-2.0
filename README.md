@@ -12,7 +12,7 @@ Killing/Replacing Awesomium - Leystryku, Parakeet
 
 CEF - Marshall A. Greenblatt, Google
 
-##Installing
+##Installation
 Download a build from the releases section, throw everything in the folder into `C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\bin\`
 
 You will need to re-install this after updates.

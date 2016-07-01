@@ -165,7 +165,7 @@ namespace Awesomium {
 						string_builder.push_back('"');
 						break;
 					default:
-						debug_stream << *str << std::endl;
+						//debug_stream << *str << std::endl;
 						panic("Unknown escape seq");
 					}
 				}

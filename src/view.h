@@ -1,37 +1,63 @@
-#include <chrono>
 
 namespace Awesomium
 {
-	class GarryClient : public CefClient, public CefRenderHandler {
+	class GarryClient : public CefClient, public CefLifeSpanHandler, public CefContextMenuHandler, public CefJSDialogHandler, public CefRenderHandler {
 	public:
 		GarryClient() { };
 		~GarryClient() { };
 
-		/*bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message) OVERRIDE {
-
-		if (message->GetName() == "garry_js_result_value") {
-		//js_ipc_complete = true;
-
-		debug_log("FIX ME BROKEN IPC");
-
-		/*switch (message->GetArgumentList()->GetInt(0)) {
-		case JsValueType::Object:
-		js_ipc_result = JSValue(JSObject( message->GetArgumentList()->GetInt(1) ));
-		break;
-		case JsValueType::Undefined:
-		js_ipc_result = JSValue::Undefined();
-		break;
-
-		case JsValueType::Unknown:
-		debug_log("HYP UNKNOWN");
-		break;
-		}*
-
-		return true;
+		CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() OVERRIDE {
+			return this;
 		}
 
-		return false;
-		}*/
+		bool OnBeforePopup(
+			CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			const CefString& target_url,
+			const CefString& target_frame_name,
+			WindowOpenDisposition target_disposition,
+			bool user_gesture,
+			const CefPopupFeatures& popupFeatures,
+			CefWindowInfo& windowInfo,
+			CefRefPtr<CefClient>& client,
+			CefBrowserSettings& settings,
+			bool* no_javascript_access
+		) OVERRIDE {
+			// Fuck popups.
+			return true;
+		}
+
+		CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() OVERRIDE {
+			return this;
+		}
+
+		bool RunContextMenu(CefRefPtr<CefBrowser> browser,
+			CefRefPtr<CefFrame> frame,
+			CefRefPtr<CefContextMenuParams> params,
+			CefRefPtr<CefMenuModel> model,
+			CefRefPtr<CefRunContextMenuCallback> callback
+		) OVERRIDE {
+			// Fuck the context menu.
+			callback->Cancel();
+			return true;
+		}
+
+		CefRefPtr<CefJSDialogHandler> GetJSDialogHandler() OVERRIDE {
+			return this;
+		}
+
+		bool OnJSDialog(CefRefPtr<CefBrowser> browser,
+			const CefString& origin_url,
+			JSDialogType dialog_type,
+			const CefString& message_text,
+			const CefString& default_prompt_text,
+			CefRefPtr<CefJSDialogCallback> callback,
+			bool& suppress_message
+		) OVERRIDE {
+			// Fuck this. TODO see if Gmod handles this.
+			callback->Continue(false,"");
+			return true;
+		}
 
 		CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE {
 			return this;
@@ -113,10 +139,7 @@ namespace Awesomium
 		// |custom_cursor_info| will be populated with the custom cursor information.
 		///
 		/*--cef()--*/
-		void OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor, CursorType type, const CefCursorInfo& custom_cursor_info) OVERRIDE {
-			debug_log(__FUNCTION__);
-			//panic(__FUNCTION__);
-		}
+		void OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor, CursorType type, const CefCursorInfo& custom_cursor_info) OVERRIDE;
 
 		///
 		// Called when the user starts dragging content in the web view. Contextual
@@ -154,7 +177,7 @@ namespace Awesomium
 		///
 		/*--cef()--*/
 		void OnScrollOffsetChanged(CefRefPtr<CefBrowser> browser, double x, double y) OVERRIDE {
-			panic(__FUNCTION__);
+			// At first I thought we were supposed to modify the surface using the scroll offset, but it seems to work fine as it is?
 		}
 
 	private:
@@ -207,18 +230,41 @@ namespace Awesomium
 		class DllExport View
 		{
 		public:
+			// Need these 'cause vtables.
+			virtual void OnChangeTitle(WebView* caller, const WebString& title) = 0;
+			virtual void OnChangeAddressBar(WebView* caller, const WebURL& url) = 0;
+			virtual void OnChangeTooltip(WebView* caller, const WebString& tooltip) = 0;
+			virtual void OnChangeTargetURL(WebView* caller, const WebURL& url) = 0;
+
+			virtual void OnChangeCursor(WebView* caller, int cursor) = 0;
+		protected:
 			virtual ~View() { debug_log(__FUNCTION__); };
 		};
 
 	};
 
+#pragma pack(push,1)
+	struct Rect {
+		int x;
+		int y;
+		int width;
+		int height;
+
+		Rect(int x, int y, int width, int height) {
+			this->x = x;
+			this->y = y;
+			this->width = width;
+			this->height = height;
+		}
+	};
+#pragma pack(pop)
+
 	class DllExport Surface
 	{
 	public:
 		virtual ~Surface() { };
-		virtual void Paint(unsigned  char*shit, int span, void*&srcrect, void*&destrect) { debug_log(__FUNCTION__); memset(shit, 1, span); };
-		virtual void Scroll(unsigned  char*shit, int span, void*&srcrect, void*&destrect) { debug_log(__FUNCTION__); memset(shit, 1, span); };
-
+		virtual void Paint(unsigned char*source, int span, const Rect& src_rect, const Rect& dst_rect) { debug_log(__FUNCTION__); };
+		virtual void Scroll(int dx, int dy, const Rect& clip_rect) { debug_log(__FUNCTION__); };
 	};
 
 	class DllExport BitmapSurface : public Surface
@@ -252,8 +298,27 @@ namespace Awesomium
 		bool SaveToPNG(const Awesomium::WebString* file_path, bool preserve_transparency = false) { debug_log(__FUNCTION__); return false; };
 		bool SaveToJPEG(const Awesomium::WebString* file_path, int quality = 90) { debug_log(__FUNCTION__); return false; };
 		unsigned char GetAlphaAtPoint(int x, int y) const { debug_log(__FUNCTION__); return 255; };
-		void Paint(unsigned char *src, int src_row_span, const void*& src_rect, const void*& dst_rect) { debug_log(__FUNCTION__); };
-		void Scroll(int dx, int dy, const void*& clip_rect) { debug_log(__FUNCTION__); }
+		
+		void Paint(unsigned char*source, int span, const Rect& src_rect, const Rect& dst_rect) OVERRIDE {
+
+			unsigned char* source_ptr = source + src_rect.x * 4 + src_rect.y * span;
+			unsigned char* dest_ptr = buffer_ + (dst_rect.x + dst_rect.y * width_) * 4;
+
+			int rect_span = src_rect.width * 4;
+			int dest_span = width_ * 4;
+
+
+			for (int y = 0; y < src_rect.height; y++) {
+				memcpy(dest_ptr, source_ptr, rect_span);
+				source_ptr += span;
+				dest_ptr += dest_span;
+			}
+
+			is_dirty_ = true;
+		};
+		void Scroll(int dx, int dy, const Rect& clip_rect) OVERRIDE {
+			debug_log(__FUNCTION__);
+		};
 
 	private:
 		unsigned char* buffer_;
@@ -301,7 +366,9 @@ namespace Awesomium
 	class DllExport WebView
 	{
 	public:
-		virtual void Destroy() { debug_log(__FUNCTION__); };
+		virtual void Destroy() {
+			delete this;
+		};
 		virtual WebViewType type() { debug_log(__FUNCTION__); return 1; }; // is this right? prolly dont matter
 		virtual int process_id() { debug_log(__FUNCTION__); return 1; };
 		virtual int routing_id() { debug_log(__FUNCTION__); return 1; };
@@ -310,7 +377,7 @@ namespace Awesomium
 		virtual void set_parent_window(NativeWindow parent) { debug_log(__FUNCTION__); };
 		virtual NativeWindow parent_window() { debug_log(__FUNCTION__); return NativeWindow(); };
 		virtual NativeWindow window() { debug_log(__FUNCTION__); return NativeWindow(); };
-		virtual void set_view_listener(WebViewListener::View* listener) { debug_log(__FUNCTION__); };
+		virtual void set_view_listener(WebViewListener::View* listener) { listener_view = listener; };
 		virtual void set_load_listener(WebViewListener::Load* listener) { debug_log(__FUNCTION__); };
 		virtual void set_process_listener(void* listener) { debug_log(__FUNCTION__); proclist = listener; };
 		virtual void set_menu_listener(void* listener) { debug_log(__FUNCTION__); menulist = listener; };
@@ -318,7 +385,7 @@ namespace Awesomium
 		virtual void set_print_listener(void* listener) { debug_log(__FUNCTION__); printlist = listener; };
 		virtual void set_download_listener(void* listener) { debug_log(__FUNCTION__); downloadlist = listener; };
 		virtual void set_input_method_editor_listener(void* listener) { debug_log(__FUNCTION__); inputlist = listener; };
-		virtual WebViewListener::View* view_listener() { debug_log(__FUNCTION__); return new WebViewListener::View(); };
+		virtual WebViewListener::View* view_listener() { debug_log(__FUNCTION__); return listener_view; };
 		virtual WebViewListener::Load* load_listener() { debug_log(__FUNCTION__); return new WebViewListener::Load(); };
 		virtual void* process_listener() {
 			debug_log(__FUNCTION__);
@@ -360,7 +427,9 @@ namespace Awesomium
 		virtual WebURL url() { debug_log(__FUNCTION__); return *(new WebURL()); };
 		virtual WebString title() { debug_log(__FUNCTION__); return WebString(); };
 		virtual WebSession* session() { debug_log(__FUNCTION__); return session_; }
-		virtual bool IsLoading() { return browser->IsLoading(); };
+		virtual bool IsLoading() {
+			return false;	//return browser->IsLoading();
+		};
 		virtual bool IsCrashed() { return false; }; // ASSUME NOT CRASHED
 		virtual void Resize(int width, int height) {
 
@@ -507,7 +576,16 @@ namespace Awesomium
 
 			browser_map[browser->GetIdentifier()] = this;
 		}
-		~WebView() { debug_log(__FUNCTION__); }
+		~WebView() {
+			browser_map.erase(browser->GetIdentifier());
+
+			delete call_source;
+
+			browser->GetHost()->CloseBrowser(true);
+
+			if (_surface != nullptr)
+				delete _surface;
+		}
 
 		int getNextGlobalID() {
 			return next_global_id++;
@@ -529,6 +607,7 @@ namespace Awesomium
 		int _height;
 
 		JsCallDataSource* call_source;
+
 	private:
 		WebSession* session_;
 		CefRefPtr<CefBrowser> browser;
@@ -536,6 +615,8 @@ namespace Awesomium
 		int next_global_id = -1; // root object takes this!
 		Surface* _surface = 0;
 		CefMouseEvent mouse;
+
+		WebViewListener::View* listener_view;
 	};
 
 	void JSObject_Global::set(const WebString& name, const JSValue& value, bool wait) {
@@ -600,7 +681,7 @@ namespace Awesomium
 		int id_end = std_path.find_first_of('/');
 		int name_end = std_path.find_first_of('?', id_end+1);
 
-		debug_stream << "~~~" << id_end << " " << name_end << std::endl;
+		//debug_stream << "~~~" << id_end << " " << name_end << std::endl;
 
 		if (id_end == 0 || name_end==0) {
 			SendResponse(id, 0, (unsigned const char*)0, WebString(L"application/json"));
@@ -611,7 +692,7 @@ namespace Awesomium
 		WebString call_name = WebString( decode_url_part( std_path.substr(id_end+1, name_end-id_end-1) ).c_str() );
 		WebString call_arg_json = WebString( decode_url_part( std_path.substr(name_end+1) ).c_str() );
 
-		debug_stream << "JS THIS SHIT " << call_id << " " << call_name << " " << call_arg_json << " " << std::endl;
+		//debug_stream << "JS THIS SHIT " << call_id << " " << call_name << " " << call_arg_json << " " << std::endl;
 
 		const wchar_t* json_ptr = call_arg_json.data();
 
@@ -680,22 +761,25 @@ namespace Awesomium
 	void GarryClient::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, const void* buffer, int width, int height) {
 		
 		//auto x = std::chrono::high_resolution_clock::now();
-
-		debug_stream << "paint" << std::endl;
-
 		
-		auto surface = static_cast<BitmapSurface*>(browser_map[browser->GetIdentifier()]->surface());
-		auto surface_width = surface->width();
+		auto surface = browser_map[browser->GetIdentifier()]->surface();
+		//auto surface_width = surface->width();
 		
-		auto surface_buffer = const_cast<unsigned char*>(surface->buffer());
+		//auto surface_buffer = const_cast<unsigned char*>(surface->buffer());
 		auto source_buffer = static_cast<unsigned char*>(const_cast<void*>(buffer));
 
 		//debug_stream << "PAINT SIZE: ( " << width << ", " << height << " ) COUNT: " << dirtyRects.size() << " TYPE: " << type << std::endl;
 
+		int source_span = width * 4;
+
 		for (auto rect : dirtyRects) {
 			//debug_stream << "POS: ( " << rect.x << ", " << rect.y << " ) SIZE: ( " << rect.width << ", " << rect.height << " ) " << std::endl;
 
-			unsigned char* source_ptr =	source_buffer +	(rect.x + rect.y * width) * 4;
+			auto a_rect = Rect(rect.x, rect.y, rect.width, rect.height);
+
+			surface->Paint(source_buffer, source_span, a_rect, a_rect);
+
+			/*unsigned char* source_ptr =	source_buffer +	(rect.x + rect.y * width) * 4;
 			unsigned char* dest_ptr = surface_buffer + (rect.x + rect.y * surface_width) * 4;
 
 			int rect_span = rect.width * 4;
@@ -707,7 +791,7 @@ namespace Awesomium
 				memcpy(dest_ptr, source_ptr, rect_span);
 				source_ptr += source_span;
 				dest_ptr += dest_span;
-			}
+			}*/
 			
 		}
 
@@ -717,7 +801,15 @@ namespace Awesomium
 		//} while (y < 100);
 		//debug_stream << "time " << span.count() << " " << CLOCKS_PER_SEC << std::endl;
 
-		surface->set_is_dirty(true);
+		//surface->set_is_dirty(true);
 		//debug_stream << "( " << width << ", " << height << " ) " << dirtyRects.size() << std::endl;*/
+	}
+
+	void GarryClient::OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor, CursorType type, const CefCursorInfo& custom_cursor_info) {
+		auto view = browser_map[browser->GetIdentifier()];
+		auto listener = view->view_listener();
+
+		if (listener != nullptr)
+			listener->OnChangeCursor(view, type );
 	}
 }

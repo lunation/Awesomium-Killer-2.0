@@ -20,16 +20,8 @@
 #include "include/cef_client.h"
 
 // Debug shit
-#include <fstream>
-
-std::ofstream debug_stream;
-
 void debug_log(const char* msg) {
-	if (!debug_stream.is_open()) {
-		debug_stream.open("C:/Users/Mad-P/Desktop/awesome_log.txt");
-		debug_stream << "Logging started!" << std::endl;
-	}
-	debug_stream << msg << std::endl;
+	cef_log(0, 0, 0, msg);
 }
 
 void panic(const char* msg) {
@@ -247,8 +239,8 @@ namespace Awesomium {
 			debug_log(__FUNCTION__);
 		};
 		virtual const char* version_string() const {
-			debug_log(__FUNCTION__"__LINE__");
-			return "6969__FUCK_GARRY__MARRY_CEF__KILL_AWESOMIUM";
+			debug_log(__FUNCTION__);
+			return "Awesomium Killer 2.0";
 		};
 
 
@@ -297,10 +289,8 @@ namespace Awesomium {
 	///////////////////////////////////////////////
 
 	void GarryResourceHandler::FillRequest(CefRefPtr<CefRequest> req, CefRefPtr<CefCallback> callback) {
-		debug_stream << "HANDLE REQ " << req->GetURL().ToString() << std::endl;
 
 		std::wstring url = req->GetURL();
-
 
 		int host_start = url.find(L"://") + 3;
 		int host_end = url.find_first_of('/', host_start);
@@ -308,8 +298,6 @@ namespace Awesomium {
 		CefString host = url.substr(host_start, host_end - host_start);
 
 		CefString path = url.substr(host_end + 1);
-
-		debug_stream << "~ " << CefString(url.substr(0, 4)).ToString() << " " << host.ToString() << " " << path.ToString() << std::endl;
 
 		if (url.substr(0, 4) == L"call") {
 			owner->call_source->ReqSync(owner, *req, path, &response);

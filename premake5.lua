@@ -1,4 +1,4 @@
-solution "FuckAwesomium"
+solution "Awesomium-Killer-2.0"
 	language "C++"
 	location "project"
 

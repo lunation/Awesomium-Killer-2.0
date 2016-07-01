@@ -105,7 +105,7 @@ namespace Awesomium {
 			case String:
 				return data.string->quote(); // QUOTE THIS
 			default:
-				debug_stream << type << std::endl;
+				//debug_stream << type << std::endl;
 				panic("cant take ? to json");
 			}
 			return "";
@@ -552,7 +552,7 @@ namespace Awesomium {
 			default:
 
 				debug_log("JSON: INVALID CHAR");
-				debug_stream << *str << std::endl;
+				//debug_stream << *str << std::endl;
 				return false;
 			}
 		}

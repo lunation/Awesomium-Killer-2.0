@@ -7,19 +7,19 @@
 
 Awesomium replacement that uses CEF internally.
 
-#Credits
+##Credits
 Killing/Replacing Awesomium - Leystryku, Parakeet
 CEF - Marshall A. Greenblatt, Google
 
-#Installing
+##Installing
 Download a release build from the releases section, throw everything in the folder into `C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\bin\`
 
 You will need to re-install this after updates.
 
-#Removal
+##Removal
 Just verify the game cache.
 
-#Compiling
+##Compiling
 If you actually want to build this, hit me up and I'll explain to process.
 
 CEF BUILD **2704.1431**

@@ -28,6 +28,7 @@ Just verify the game cache.
 - CMake
 
 **Instructions**
+
 1. Clone the repo.
 2. Run the premake script.
 3. Get a CEF build from https://cefbuilds.com/ and put it in the "cef" directory of this repo. I'm currently using build 2704. If you use another build you might have to change the path of the dll wrapper shit. 

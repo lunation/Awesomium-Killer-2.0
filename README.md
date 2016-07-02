@@ -35,6 +35,7 @@ Just verify the game cache.
 4. Run cmake on CEF, this is needed to build the dll wrapper. Disable 
 5. Open up the CEF solution and do a release build.
 6. Should be ready to build the module. The solution can be found in the "project" directory of the repo.
+
 **Note: If the GPU process starts crashing a lot, replace the GL libraries with the ones from build 2526. You'll know if the GPU process is crashing, the screen will flicker like a crazy bitch.**
 
 **Configurations**

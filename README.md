@@ -41,6 +41,7 @@ Just verify the game cache.
 **Configurations**
 
 Test - Enables logging, copies output to garrysmod directory, which you may need to change on your machine.
+
 Release - Enables optimizations. Copies to the "release" directory in the repo.
 
 **Project Setup**

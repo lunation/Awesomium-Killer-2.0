@@ -38,10 +38,12 @@ Just verify the game cache.
 **Note: If the GPU process starts crashing a lot, replace the GL libraries with the ones from build 2526. You'll know if the GPU process is crashing, the screen will flicker like a crazy bitch.**
 
 **Configurations**
+
 Test - Enables logging, copies output to garrysmod directory, which you may need to change on your machine.
 Release - Enables optimizations. Copies to the "release" directory in the repo.
 
 **Project Setup**
+
 I recommend that you read about CEF's architecture if you want to contribute, as it is a bit complex: https://bitbucket.org/chromiumembedded/cef/wiki/GeneralUsage.md#markdown-header-important-concepts
 
 The project consists of two parts: The replacement for the awesomium module, and the subprocess executable. The module (and garrysmod, by extension) act as the "main" process, while the subprocess is used for rendering and javascript shenanigans.

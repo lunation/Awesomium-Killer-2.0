@@ -32,7 +32,7 @@ Just verify the game cache.
 1. Clone the repo.
 2. Run the premake script.
 3. Get a CEF build from https://cefbuilds.com/ and put it in the "cef" directory of this repo. I'm currently using build 2704. If you use another build you might have to change the path of the dll wrapper shit. 
-4. Run cmake on CEF, this is needed to build the dll wrapper. Disable 
+4. Run cmake on CEF, this is needed to build the dll wrapper. Disable sandboxing and leave the ATL thing on.
 5. Open up the CEF solution and do a release build.
 6. Should be ready to build the module. The solution can be found in the "project" directory of the repo.
 

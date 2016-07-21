@@ -266,19 +266,14 @@ namespace Awesomium {
 			#endif
 			settings.windowless_rendering_enabled = true;
 
-
-			//settings.multi_threaded_message_loop = true;
-
-			//CefRefPtr<DumbApp> app_ref(new DumbApp);
-
 			if (!CefInitialize(args, settings, new GarryApp(), nullptr))
 				panic("CEF Setup Failed!");
 
 			CefRefPtr<GarrySchemeHandlerFactory> garryFactory = new GarrySchemeHandlerFactory();
 			CefRegisterSchemeHandlerFactory("asset", "", garryFactory);
-			CefRegisterSchemeHandlerFactory("call", "", garryFactory);
-
-			//makeThatWindow();
+			
+			CefRegisterSchemeHandlerFactory("http", "jscall", garryFactory);
+			CefRegisterSchemeHandlerFactory("https", "jscall", garryFactory);
 		};
 
 		static WebCore* instance_;
@@ -302,7 +297,10 @@ namespace Awesomium {
 
 		CefString path = url.substr(host_end + 1);
 
-		if (url.substr(0, 4) == L"call") {
+		debug_log(CefString(url).ToString().c_str());
+
+		if (host == L"jscall") {
+			debug_log("############################# WEWLAD");
 			owner->call_source->ReqSync(owner, *req, path, &response);
 
 			callback->Continue();

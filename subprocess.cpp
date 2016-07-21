@@ -121,12 +121,17 @@ public:
 
 		// Function MUST be wrapped in parens or it will fail to compile (wtf?)
 		bool success = context->Eval(R"(
+			var xyzzy = console.log.bind(console);	
+
 			(function(id,name) {
 				return function() {
-					if (location.protocol == "https:")
+					//xyzzy('x');
+					/*if (location.protocol == "https:") {
+						xyzzy('cancel external call!');
 						return;
+					}*/
 					var request = new XMLHttpRequest();
-					request.open("POST", "call://_/"+id+"/"+name+"?"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
+					request.open("POST", "//jscall/"+id+"/"+name+"?"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
 					request.send();
 					if (request.status==200) {
 						return JSON.parse(request.responseText);

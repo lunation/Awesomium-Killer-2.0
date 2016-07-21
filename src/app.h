@@ -7,6 +7,8 @@ public:
 
 		command_line->AppendSwitch("allow-file-access-from-files");
 
+		command_line->AppendSwitch("enable-system-flash");
+
 		// Fucks over everything.
 		//command_line->AppendSwitch("enable-begin-frame-scheduling");
 
@@ -17,7 +19,7 @@ public:
 
 	void OnRegisterCustomSchemes(CefRefPtr<CefSchemeRegistrar> registrar) OVERRIDE {
 		registrar->AddCustomScheme("asset", true, true, true);
-		registrar->AddCustomScheme("call", true, false, false);
+		//registrar->AddCustomScheme("call", true, false, false);
 	}
 private:
 	IMPLEMENT_REFCOUNTING(GarryApp);

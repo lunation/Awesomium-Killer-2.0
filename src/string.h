@@ -167,9 +167,26 @@ namespace Awesomium {
 					case '\\':
 						string_builder.push_back('\\');
 						break;
+					case 'b':
+						string_builder.push_back('\b');
+						break;
+					case 'f':
+						string_builder.push_back('\f');
+						break;
+					case 'n':
+						string_builder.push_back('\n');
+						break;
+					case 'r':
+						string_builder.push_back('\r');
+						break;
+					case 't':
+						string_builder.push_back('\t');
+						break;
+
+						//TODO UNICODE!
 					default:
 						//debug_stream << *str << std::endl;
-						debug_log((std::string("asdf ") + std::to_string(c)).c_str());
+						debug_log((std::string("-> ") + std::to_string(c)).c_str());
 						panic("Unknown escape seq");
 					}
 				}

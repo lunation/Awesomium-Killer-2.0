@@ -230,13 +230,7 @@ namespace Awesomium {
 		};
 
 		virtual void Update() {
-			//debug_log("Update - Pre Unlock");
-			//js_call_lock.unlock();
-			//debug_log("Update - Post Unlock");
 			CefDoMessageLoopWork();
-			//debug_log("Update - Pre Lock");
-			//js_call_lock.lock();
-			//debug_log("Update - Post Lock");
 		};
 
 		virtual void Log(const WebString& message, int severity, const WebString& file, int line) {
@@ -244,7 +238,7 @@ namespace Awesomium {
 		};
 		virtual const char* version_string() const {
 			debug_log(__FUNCTION__);
-			return "Awesomium Killer 2.0";
+			return "Awesomium Killer 2.1";
 		};
 
 

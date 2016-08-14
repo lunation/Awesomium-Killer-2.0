@@ -18,7 +18,7 @@ CEF - Marshall A. Greenblatt, Google
 
 Download a build from the [releases](https://github.com/lunation/Awesomium-Killer-2.0/releases) section, throw everything in the folder into `C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\bin\`
 
-You will need to re-install this after updates.
+You may need to re-install this after updates.
 
 ## Removal
 Just verify the game cache.

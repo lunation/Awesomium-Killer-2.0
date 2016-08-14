@@ -16,7 +16,7 @@ CEF - Marshall A. Greenblatt, Google
 
 **🐕 THIS IS STILL PRETTY UNSTABLE AND MAY CRASH FREQUENTLY! I REALLY APPRECIATE TESTERS, BUT THIS MAY NOT BE A GOOD THING TO USE IF YOU ENJOY BUILDING! 🐕**
 
-Download a build from the releases section, throw everything in the folder into `C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\bin\`
+Download a build from the [releases](https://github.com/lunation/Awesomium-Killer-2.0/releases) section, throw everything in the folder into `C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\bin\`
 
 You will need to re-install this after updates.
 

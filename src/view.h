@@ -467,9 +467,38 @@ namespace Awesomium
 			browser->GetHost()->SendMouseMoveEvent(mouse, false);
 		};
 		virtual void InjectMouseDown(int button) {
+			// add the correct flag.
+			switch (button) {
+			case 0:
+				mouse.modifiers |= cef_event_flags_t::EVENTFLAG_LEFT_MOUSE_BUTTON;
+				break;
+			case 1:
+				mouse.modifiers |= cef_event_flags_t::EVENTFLAG_MIDDLE_MOUSE_BUTTON;
+				break;
+			case 2:
+				mouse.modifiers |= cef_event_flags_t::EVENTFLAG_RIGHT_MOUSE_BUTTON;
+				break;
+			}
+			
+			// don't worry about double clicks, they are broken in awesome as well.
 			browser->GetHost()->SendMouseClickEvent(mouse, static_cast<cef_mouse_button_type_t>(button), false, 1);
+
 		};
 		virtual void InjectMouseUp(int button) {
+			
+			// remove the correct flag.
+			switch (button) {
+			case 0:
+				mouse.modifiers &= ~cef_event_flags_t::EVENTFLAG_LEFT_MOUSE_BUTTON;
+				break;
+			case 1:
+				mouse.modifiers &= ~cef_event_flags_t::EVENTFLAG_MIDDLE_MOUSE_BUTTON;
+				break;
+			case 2:
+				mouse.modifiers &= ~cef_event_flags_t::EVENTFLAG_RIGHT_MOUSE_BUTTON;
+				break;
+			}
+
 			browser->GetHost()->SendMouseClickEvent(mouse, static_cast<cef_mouse_button_type_t>(button), true, 0);
 		};
 		virtual void InjectMouseWheel(int scroll_vert, int scroll_horz) {

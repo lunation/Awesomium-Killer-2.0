@@ -82,12 +82,14 @@ namespace Awesomium {
 	public:
 
 		GarryResourceHandler(WebView* owner) {
+			debug_log("new handler");
 			this->owner = owner;
 		}
 
 		void FillRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback);
 
 		bool ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) OVERRIDE {
+			debug_log("process req");
 			CefPostTask(TID_UI, base::Bind(&GarryResourceHandler::FillRequest, this, request, callback));
 			return true;
 		}
@@ -136,6 +138,7 @@ namespace Awesomium {
 	{
 	public:
 		CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& scheme_name, CefRefPtr<CefRequest> request) OVERRIDE {
+			debug_log("rerr");
 			return new GarryResourceHandler(browser_map[browser->GetIdentifier()]);
 		}
 	private:

@@ -38,7 +38,7 @@ public:
 
 	virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message) OVERRIDE {
 		auto args = message->GetArgumentList();
-
+		cef_log(0, 0, 0, "rx log");
 		if (message->GetName() == "garry_js_set_global") {
 
 			int parent_id = args->GetInt(0);
@@ -121,15 +121,8 @@ public:
 
 		// Function MUST be wrapped in parens or it will fail to compile (wtf?)
 		bool success = context->Eval(R"(
-			var xyzzy = console.log.bind(console);	
-
 			(function(id,name) {
 				return function() {
-					//xyzzy('x');
-					/*if (location.protocol == "https:") {
-						xyzzy('cancel external call!');
-						return;
-					}*/
 					var request = new XMLHttpRequest();
 					request.open("POST", "//jscall/"+id+"/"+name+"?"+JSON.stringify(Array.prototype.slice.call(arguments)), false);
 					request.send();
@@ -141,6 +134,12 @@ public:
 				}
 			})
 		)", makeFunc, err);
+
+		if (!success) {
+			cef_log(0, 0, 0, err->GetMessageW().ToString().c_str());
+			cef_log(0, 0, 0, "ABORTED CUSTOM METHOD SETUP!");
+			return;
+		}
 
 		auto global = context->GetGlobal();
 

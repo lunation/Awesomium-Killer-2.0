@@ -9,6 +9,8 @@ public:
 
 		command_line->AppendSwitch("enable-system-flash");
 
+		//command_line->AppendSwitchWithValue("v", "1");
+
 		// Fucks over everything.
 		//command_line->AppendSwitch("enable-begin-frame-scheduling");
 

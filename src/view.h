@@ -523,11 +523,12 @@ namespace Awesomium
 
 		};
 		virtual void ExecuteJavascript(const WebString& script, const WebString& frame_xpath) {
+			debug_log("running js!");
 			if (!frame_xpath.IsEmpty())
 				panic("non-empty frame path for js execution!");
 
 			browser->GetMainFrame()->ExecuteJavaScript(CefString(script.data()), CefString("gmod"), 0);
-
+			debug_log("finished js!");
 		};
 		virtual JSValue ExecuteJavascriptWithResult(const WebString& script, const WebString& frame_xpath) {
 			debug_log(__FUNCTION__);
@@ -761,8 +762,13 @@ namespace Awesomium
 	void GarryClient::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, const void* buffer, int width, int height) {
 		
 		//auto x = std::chrono::high_resolution_clock::now();
-		
-		auto surface = browser_map[browser->GetIdentifier()]->surface();
+		auto it = browser_map.find(browser->GetIdentifier());
+		if (it == browser_map.end()) {
+			// TODO, DO THESE CHECKS MORE!
+			debug_log("abort paint, no browser");
+			return;
+		}
+		auto surface = it->second->surface();
 		//auto surface_width = surface->width();
 		
 		//auto surface_buffer = const_cast<unsigned char*>(surface->buffer());

@@ -13,6 +13,7 @@ solution "Awesomium-Killer-2.0"
 
 	configuration "1-Test"
 		defines { "TESTING" }
+		flags { "Symbols" }
 		targetdir "C:/Program Files (x86)/Steam/steamapps/common/GarrysMod/bin/"
 
 	configuration "2-Release"

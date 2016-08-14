@@ -164,8 +164,12 @@ namespace Awesomium {
 					case '"':
 						string_builder.push_back('"');
 						break;
+					case '\\':
+						string_builder.push_back('\\');
+						break;
 					default:
 						//debug_stream << *str << std::endl;
+						debug_log((std::string("asdf ") + std::to_string(c)).c_str());
 						panic("Unknown escape seq");
 					}
 				}

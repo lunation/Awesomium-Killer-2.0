@@ -158,7 +158,7 @@ namespace Awesomium
 		///
 		/*--cef()--*/
 		bool StartDragging(CefRefPtr<CefBrowser> browser, CefRefPtr<CefDragData> drag_data, DragOperationsMask allowed_ops, int x, int y) OVERRIDE {
-			panic(__FUNCTION__);
+			// fuck click-dragging
 			return false;
 		}
 

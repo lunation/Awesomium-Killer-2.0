@@ -38,7 +38,7 @@ public:
 
 	virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process, CefRefPtr<CefProcessMessage> message) OVERRIDE {
 		auto args = message->GetArgumentList();
-		cef_log(0, 0, 0, "rx log");
+		//cef_log(0, 0, 0, "rx log");
 		if (message->GetName() == "garry_js_set_global") {
 
 			int parent_id = args->GetInt(0);

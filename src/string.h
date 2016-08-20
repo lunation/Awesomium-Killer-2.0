@@ -98,7 +98,7 @@ namespace Awesomium {
 			internal_string->clear();
 		};
 
-		// NOT SURE IF THE NULL TERMINATION THING IS NEEDED OR NOT, ADDED IT TO BE SAFE.
+		// THESE DO -NOT- NEED TO BE NULL TERMINATED. IF THEY -ARE- NULL TERMINATED, THINGS WILL BREAK!
 		unsigned int ToUTF8(char*dest, unsigned int len) const {
 			std::string byte_str = internal_string->ToString(); // THIS MAY BE WRONG AS WELL!
 
@@ -107,15 +107,18 @@ namespace Awesomium {
 				dest[i] = byte_str[i];
 			}
 
-			if (i < len) {
+			/*if (i < len) {
 				dest[i] = 0;
-			}
+			}*/
 
-			return byte_str.length()+1; // AFAIK WE NEED TO RETURN THE EXPECTED SIZE OF THE BYTE STRING!
+			return byte_str.length();// +1; // AFAIK WE NEED TO RETURN THE EXPECTED SIZE OF THE BYTE STRING!
 		};
 
 		bool operator==(const WebString&other) const {
-			debug_log(__FUNCTION__"__LINE__");
+			
+			
+			
+			(__FUNCTION__"__LINE__");
 			return true;
 		};
 		bool operator!=(const WebString&other) const {

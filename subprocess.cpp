@@ -119,6 +119,9 @@ public:
 		CefRefPtr<CefV8Value> makeFunc;
 		CefRefPtr<CefV8Exception> err;
 
+		// Hack to block printing.
+		context->Eval("print = function() {}", makeFunc, err);
+		
 		// Function MUST be wrapped in parens or it will fail to compile (wtf?)
 		bool success = context->Eval(R"(
 			(function(id,name) {

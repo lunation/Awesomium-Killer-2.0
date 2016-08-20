@@ -82,14 +82,14 @@ namespace Awesomium {
 	public:
 
 		GarryResourceHandler(WebView* owner) {
-			debug_log("new handler");
+			//debug_log("new handler");
 			this->owner = owner;
 		}
 
 		void FillRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback);
 
 		bool ProcessRequest(CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) OVERRIDE {
-			debug_log("process req");
+			//debug_log("process req");
 			CefPostTask(TID_UI, base::Bind(&GarryResourceHandler::FillRequest, this, request, callback));
 			return true;
 		}
@@ -108,16 +108,27 @@ namespace Awesomium {
 			headers.insert(std::pair<CefString, CefString>("Access-Control-Allow-Origin","*"));
 			res->SetHeaderMap(headers);
 			res->SetMimeType(response.mime);
+			//debug_log("mime>>");
+			//debug_log(response.mime.ToString().c_str());
+			//debug_log(std::to_string(res_len).c_str());
 			index = 0;
 		}
 
 		bool ReadResponse(void* data_out, int bytes_to_read, int& bytes_read, CefRefPtr<CefCallback> callback) OVERRIDE {
+			
+			//debug_log("read>>");
+			
 			int i;
 			for (i = 0; i < bytes_to_read; i++) {
 				((char*)data_out)[i] = response.data[index++];
 			}
 
 			bytes_read = i;
+
+			/*if (index == response.len) {
+				debug_log("done>>");
+				return false;
+			}*/
 
 			return true;
 		}
@@ -138,8 +149,17 @@ namespace Awesomium {
 	{
 	public:
 		CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& scheme_name, CefRefPtr<CefRequest> request) OVERRIDE {
-			debug_log("rerr");
-			return new GarryResourceHandler(browser_map[browser->GetIdentifier()]);
+
+			// Sometimes devtools requests source maps and we can't correctly serve them using this already overcomplicated scheme. Fuck source maps.
+			if (browser == nullptr)
+				return nullptr;
+
+			auto iter = browser_map.find(browser->GetIdentifier());
+
+			if (iter == browser_map.end())
+				return nullptr;
+
+			return new GarryResourceHandler(iter->second);
 		}
 	private:
 		IMPLEMENT_REFCOUNTING(GarrySchemeHandlerFactory);
@@ -294,10 +314,10 @@ namespace Awesomium {
 
 		CefString path = url.substr(host_end + 1);
 
-		debug_log(CefString(url).ToString().c_str());
+		//debug_log(CefString(url).ToString().c_str());
 
 		if (host == L"jscall") {
-			debug_log("############################# WEWLAD");
+			//debug_log("############################# WEWLAD");
 			owner->call_source->ReqSync(owner, *req, path, &response);
 
 			callback->Continue();

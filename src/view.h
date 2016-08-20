@@ -54,7 +54,7 @@ namespace Awesomium
 			CefRefPtr<CefJSDialogCallback> callback,
 			bool& suppress_message
 		) OVERRIDE {
-			// Fuck this. TODO see if Gmod handles this.
+			// Fuck this.
 			callback->Continue(false,"");
 			return true;
 		}
@@ -428,7 +428,11 @@ namespace Awesomium
 		virtual WebString title() { debug_log(__FUNCTION__); return WebString(); };
 		virtual WebSession* session() { debug_log(__FUNCTION__); return session_; }
 		virtual bool IsLoading() {
-			return false;	//return browser->IsLoading();
+			//return false;
+			//return true;
+			//if (browser->IsLoading())
+			//	debug_log("-------------------------loadcheck yes!");
+			return browser->IsLoading();
 		};
 		virtual bool IsCrashed() { return false; }; // ASSUME NOT CRASHED
 		virtual void Resize(int width, int height) {
@@ -552,12 +556,16 @@ namespace Awesomium
 
 		};
 		virtual void ExecuteJavascript(const WebString& script, const WebString& frame_xpath) {
-			debug_log("running js!");
+			/*debug_log("running js!");
+			if (IsLoading())
+				debug_log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> run js while loading!");*/
+
 			if (!frame_xpath.IsEmpty())
 				panic("non-empty frame path for js execution!");
 
+
 			browser->GetMainFrame()->ExecuteJavaScript(CefString(script.data()), CefString("gmod"), 0);
-			debug_log("finished js!");
+			//debug_log("finished js!");
 		};
 		virtual JSValue ExecuteJavascriptWithResult(const WebString& script, const WebString& frame_xpath) {
 			debug_log(__FUNCTION__);
@@ -699,7 +707,7 @@ namespace Awesomium
 
 	void JsCallDataSource::OnRequest(int id, const ResourceRequest& request, const WebString& path) {
 
-		debug_log("enter");
+		//debug_log("enter");
 
 		if (path.data() == 0) {
 			SendResponse(id, 0, (unsigned const char*)0, WebString(L"application/json"));

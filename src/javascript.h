@@ -549,6 +549,40 @@ namespace Awesomium {
 
 				break;
 			}
+			case 't': {
+				if (str[1] == 'r' && str[2] == 'u' && str[3] == 'e') {
+					x = JSValue(true);
+					str += 4;
+				} else {
+					debug_log("JSON: INVALID CHAR (2)");
+					return false;
+				}
+
+				break;
+			}
+			case 'f':
+				if (str[1] == 'a' && str[2] == 'l' && str[3] == 's' && str[4] == 'e') {
+					x = JSValue(false);
+					str += 5;
+				}
+				else {
+					debug_log("JSON: INVALID CHAR (3)");
+					return false;
+				}
+
+				break;
+			case 'n': {
+				if (str[1] == 'u' && str[2] == 'l' && str[3] == 'l') {
+					x = JSValue();
+					str += 4;
+				}
+				else {
+					debug_log("JSON: INVALID CHAR (4)");
+					return false;
+				}
+
+				break;
+			}
 			default:
 
 				debug_log("JSON: INVALID CHAR");

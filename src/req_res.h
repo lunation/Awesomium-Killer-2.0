@@ -99,8 +99,8 @@ namespace Awesomium {
 
 			if (id != data_source_id)
 				panic("Our datasources are still fucked god damn it.");
-			debug_log("response");
-			debug_log(std::to_string(len).c_str());
+			//debug_log("response");
+			//debug_log(std::to_string(len).c_str());
 			response->set(len, data, mime);
 			ready = true;
 		};
@@ -117,11 +117,11 @@ namespace Awesomium {
 			ready = false;
 			response = res;
 
-			debug_log("fetch");
-			debug_log(CefString(path).ToString().c_str());
+			//debug_log("fetch");
+			//debug_log(CefString(path).ToString().c_str());
 			OnRequest(data_source_id, awesome_req, webstr_path);
 
-			if (!ready) panic("meme");
+			if (!ready) panic("low quality meme");
 		}
 
 	protected:
